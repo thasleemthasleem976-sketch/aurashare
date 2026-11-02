@@ -10,11 +10,15 @@ class AuraShareApp {
     this.nodeId = sessionStorage.getItem('aura_node_id') || 'node_' + Math.random().toString(36).substring(2, 9);
     sessionStorage.setItem('aura_node_id', this.nodeId);
 
-    this.user = JSON.parse(localStorage.getItem('aura_user')) || {
-      name: 'Alex Rivera',
-      email: 'alex@aurashare.local',
-      deviceName: 'ASUS Laptop',
-      avatar: 'A'
+    // Authentication accounts and active session
+    this.accounts = JSON.parse(localStorage.getItem('aura_accounts')) || [];
+    this.authSession = JSON.parse(localStorage.getItem('aura_auth_session')) || null;
+
+    this.user = this.authSession || {
+      name: 'User',
+      email: 'user@aurashare.local',
+      deviceName: 'My Device',
+      avatar: 'U'
     };
 
     this.settings = JSON.parse(localStorage.getItem('aura_settings')) || {
@@ -38,6 +42,7 @@ class AuraShareApp {
     this.activeTransfer = null;
     this.transferTimer = null;
     this.isPaused = false;
+    this.deferredPrompt = null;
 
     // Inter-tab / local network P2P discovery channel
     this.channel = new BroadcastChannel('aurashare_p2p_channel');
@@ -46,9 +51,11 @@ class AuraShareApp {
   }
 
   async init() {
+    this.checkAuth();
     this.setupNavigation();
     this.setupBroadcastChannel();
     this.setupEventListeners();
+    this.setupPwa();
     this.renderUserProfile();
     this.renderStats();
     this.renderHistory();
@@ -220,26 +227,72 @@ class AuraShareApp {
     document.getElementById('sendDirectIpBtn').onclick = () => {
       document.getElementById('directIpModal').classList.remove('hidden');
     };
+    document.getElementById('sendDirectIpBtn').onclick = () => {
+      document.getElementById('directIpStatus').classList.add('hidden');
+      document.getElementById('directIpModal').classList.remove('hidden');
+    };
     document.getElementById('cancelDirectIpBtn').onclick = () => {
       document.getElementById('directIpModal').classList.add('hidden');
     };
-    document.getElementById('connectDirectIpBtn').onclick = () => {
-      const ip = document.getElementById('directIpInput').value.trim();
-      const port = document.getElementById('directPortInput').value.trim() || 52346;
-      if (ip) {
-        document.getElementById('directIpModal').classList.add('hidden');
-        const customDev = {
-          id: 'dev_direct_' + ip.replace(/\./g, '_'),
-          name: 'Direct Node (' + ip + ')',
-          platform: 'Direct TCP',
-          ip: ip,
-          port: parseInt(port),
-          lastSeen: Date.now()
-        };
-        this.addDevice(customDev);
-        // Directly send to this IP
-        this.sendFilesToDevice(customDev);
+    document.getElementById('connectDirectIpBtn').onclick = async () => {
+      const ipInput = document.getElementById('directIpInput');
+      const portInput = document.getElementById('directPortInput');
+      const statusEl = document.getElementById('directIpStatus');
+      const connectBtn = document.getElementById('connectDirectIpBtn');
+      const ip = ipInput.value.trim();
+      const port = parseInt(portInput.value.trim()) || 52346;
+
+      const ipRegex = /^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)$/;
+      const isLocalhost = ip === 'localhost' || ip === '127.0.0.1';
+
+      if (!ip || (!ipRegex.test(ip) && !isLocalhost)) {
+        statusEl.innerHTML = '<i class="fa-solid fa-triangle-exclamation"></i> Invalid IPv4 format. Enter a valid IP address (e.g. 10.73.110.163). Random numbers are not allowed.';
+        statusEl.className = 'form-status-msg error';
+        statusEl.classList.remove('hidden');
+        return;
       }
+
+      // Check for available resource on target node
+      statusEl.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> Probing active resource at ${ip}:${port}...`;
+      statusEl.className = 'form-status-msg info';
+      statusEl.classList.remove('hidden');
+      connectBtn.disabled = true;
+
+      try {
+        const resp = await fetch(`/api/probe?ip=${encodeURIComponent(ip)}&port=${encodeURIComponent(port)}`);
+        const data = await resp.json();
+        connectBtn.disabled = false;
+
+        if (data && data.available) {
+          statusEl.innerHTML = `<i class="fa-solid fa-circle-check"></i> Target node verified active! Connecting...`;
+          statusEl.className = 'form-status-msg success';
+
+          setTimeout(() => {
+            document.getElementById('directIpModal').classList.add('hidden');
+            const customDev = {
+              id: 'dev_direct_' + ip.replace(/\./g, '_'),
+              name: 'Direct Node (' + ip + ')',
+              platform: 'Direct TCP',
+              ip: ip,
+              port: port,
+              lastSeen: Date.now()
+            };
+            this.addDevice(customDev);
+            this.sendFilesToDevice(customDev);
+          }, 500);
+        } else {
+          statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Resource unavailable. No active AuraShare service responding at ${ip}:${port}. Please verify the target device has AuraShare open on this network.`;
+          statusEl.className = 'form-status-msg error';
+        }
+      } catch (err) {
+        connectBtn.disabled = false;
+        statusEl.innerHTML = `<i class="fa-solid fa-circle-xmark"></i> Connection probe failed for ${ip}:${port}.`;
+        statusEl.className = 'form-status-msg error';
+      }
+    };
+
+    document.getElementById('logoutBtn').onclick = () => {
+      this.handleLogout();
     };
 
     document.getElementById('sendRefreshRadarBtn').onclick = () => {
@@ -904,6 +957,193 @@ class AuraShareApp {
     localStorage.setItem('aura_trusted_ids', JSON.stringify(this.trustedIds));
     this.renderSendDevicesGrid();
     this.renderTrustedDevices();
+  }
+
+  // --- Authentication System ---
+
+  checkAuth() {
+    const authOverlay = document.getElementById('authModalOverlay');
+    if (!this.authSession) {
+      if (authOverlay) authOverlay.classList.remove('hidden');
+    } else {
+      if (authOverlay) authOverlay.classList.add('hidden');
+      this.user = this.authSession;
+      this.settings.deviceName = this.authSession.deviceName || this.settings.deviceName;
+    }
+  }
+
+  switchAuthTab(tab) {
+    const loginForm = document.getElementById('loginForm');
+    const registerForm = document.getElementById('registerForm');
+    const tabLogin = document.getElementById('authTabLogin');
+    const tabRegister = document.getElementById('authTabRegister');
+    const alertBox = document.getElementById('authAlertBox');
+
+    if (alertBox) alertBox.classList.add('hidden');
+
+    if (tab === 'login') {
+      tabLogin.classList.add('active');
+      tabRegister.classList.remove('active');
+      loginForm.classList.remove('hidden');
+      registerForm.classList.add('hidden');
+    } else {
+      tabRegister.classList.add('active');
+      tabLogin.classList.remove('active');
+      registerForm.classList.remove('hidden');
+      loginForm.classList.add('hidden');
+    }
+  }
+
+  togglePasswordVisibility(inputId, btn) {
+    const input = document.getElementById(inputId);
+    if (!input) return;
+    if (input.type === 'password') {
+      input.type = 'text';
+      btn.innerHTML = '<i class="fa-regular fa-eye-slash"></i>';
+    } else {
+      input.type = 'password';
+      btn.innerHTML = '<i class="fa-regular fa-eye"></i>';
+    }
+  }
+
+  showAuthAlert(message, type = 'error') {
+    const alertBox = document.getElementById('authAlertBox');
+    if (!alertBox) return;
+    alertBox.innerHTML = `<i class="fa-solid fa-${type === 'error' ? 'triangle-exclamation' : 'circle-check'}"></i> ${message}`;
+    alertBox.className = `form-status-msg ${type}`;
+    alertBox.classList.remove('hidden');
+  }
+
+  handleLogin() {
+    const email = document.getElementById('loginEmail').value.trim().toLowerCase();
+    const password = document.getElementById('loginPassword').value;
+
+    const account = this.accounts.find(a => a.email.toLowerCase() === email && a.password === password);
+    if (!account) {
+      this.showAuthAlert('Invalid email or password. Please verify your credentials or create an account.', 'error');
+      return;
+    }
+
+    // Set active session
+    this.authSession = {
+      name: account.name,
+      email: account.email,
+      deviceName: account.deviceName || account.name + "'s Device",
+      avatar: account.name.charAt(0).toUpperCase()
+    };
+    localStorage.setItem('aura_auth_session', JSON.stringify(this.authSession));
+    this.user = this.authSession;
+    this.settings.deviceName = this.user.deviceName;
+    localStorage.setItem('aura_settings', JSON.stringify(this.settings));
+
+    document.getElementById('authModalOverlay').classList.add('hidden');
+    this.renderUserProfile();
+    this.broadcastBeacon();
+    this.addNotification('Welcome Back', `Logged in as ${this.user.name} (${this.user.email})`, 'success');
+  }
+
+  handleRegister() {
+    const name = document.getElementById('regFullName').value.trim();
+    const email = document.getElementById('regEmail').value.trim().toLowerCase();
+    let deviceName = document.getElementById('regDeviceName').value.trim();
+    const password = document.getElementById('regPassword').value;
+    const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+    if (!name || !email || !password) {
+      this.showAuthAlert('Please fill in all required fields.', 'error');
+      return;
+    }
+
+    if (password.length < 6) {
+      this.showAuthAlert('Password must be at least 6 characters long.', 'error');
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      this.showAuthAlert('Passwords do not match. Please re-enter.', 'error');
+      return;
+    }
+
+    // Check if email already exists
+    const exists = this.accounts.some(a => a.email.toLowerCase() === email);
+    if (exists) {
+      this.showAuthAlert('An account with this email already exists. Please Sign In.', 'error');
+      return;
+    }
+
+    if (!deviceName) {
+      deviceName = name + "'s Device";
+    }
+
+    const newAccount = {
+      id: 'acc_' + Date.now(),
+      name: name,
+      email: email,
+      deviceName: deviceName,
+      password: password,
+      createdAt: new Date().toISOString()
+    };
+
+    this.accounts.push(newAccount);
+    localStorage.setItem('aura_accounts', JSON.stringify(this.accounts));
+
+    // Automatically log in
+    this.authSession = {
+      name: newAccount.name,
+      email: newAccount.email,
+      deviceName: newAccount.deviceName,
+      avatar: newAccount.name.charAt(0).toUpperCase()
+    };
+    localStorage.setItem('aura_auth_session', JSON.stringify(this.authSession));
+    this.user = this.authSession;
+    this.settings.deviceName = this.user.deviceName;
+    localStorage.setItem('aura_settings', JSON.stringify(this.settings));
+
+    document.getElementById('authModalOverlay').classList.add('hidden');
+    this.renderUserProfile();
+    this.broadcastBeacon();
+    this.addNotification('Account Created', `Welcome to AuraShare, ${this.user.name}! Your offline profile is active.`, 'success');
+  }
+
+  handleLogout() {
+    if (confirm('Are you sure you want to log out of AuraShare?')) {
+      this.authSession = null;
+      localStorage.removeItem('aura_auth_session');
+      this.checkAuth();
+      this.switchAuthTab('login');
+      this.showAuthAlert('You have been logged out securely.', 'info');
+    }
+  }
+
+  // --- Progressive Web App (PWA) Offline Support ---
+
+  setupPwa() {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/service-worker.js').catch(err => {
+        console.warn('[PWA] Service worker registration error:', err);
+      });
+    }
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      this.deferredPrompt = e;
+      const btn = document.getElementById('pwaInstallScreenBtn');
+      if (btn) btn.classList.remove('hidden');
+    });
+  }
+
+  triggerPwaInstall() {
+    if (this.deferredPrompt) {
+      this.deferredPrompt.prompt();
+      this.deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          this.addNotification('App Installed', 'AuraShare is installed on this device with full offline capabilities.', 'success');
+        }
+        this.deferredPrompt = null;
+      });
+    } else {
+      alert('AuraShare Offline App Installation:\n\n1. Windows/Mac (Chrome/Edge): Look for the "Install" icon in the right side of the address bar, or click Menu (three dots) -> "Install AuraShare".\n2. Android: Tap browser Menu -> "Add to Home screen" or "Install App".\n\nOnce installed, AuraShare runs as a standalone windowed app with zero internet required!');
+    }
   }
 }
 

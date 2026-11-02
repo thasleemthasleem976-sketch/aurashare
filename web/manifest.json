@@ -1,0 +1,23 @@
+{
+  "name": "AuraShare – Secure Offline File Sharing",
+  "short_name": "AuraShare",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#070b14",
+  "theme_color": "#00b4d8",
+  "description": "Secure offline peer-to-peer file transfer without internet or cloud storage.",
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}
