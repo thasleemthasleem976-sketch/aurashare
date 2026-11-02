@@ -71,6 +71,7 @@ FEATURES:
         ("web/app.js", "app.js"),
         ("web/manifest.json", "manifest.json"),
         ("web/sw.js", "sw.js"),
+        ("web/workspace-bg.png", "workspace-bg.png"),
         ("web/icon-192.png", "icon-192.png"),
         ("web/icon-512.png", "icon-512.png"),
         ("web/icon-maskable-512.png", "icon-maskable-512.png"),

@@ -417,13 +417,19 @@ class AuraShareApp {
       localStorage.setItem('aura_settings', JSON.stringify(this.settings));
 
       this.renderUserProfile();
-      alert('Settings saved locally!');
+      this.addNotification('Settings Saved', 'Preferences saved to local vault.', 'success');
     };
 
     // Theme toggle
-    document.getElementById('themeToggleBtn').onclick = () => {
-      document.body.classList.toggle('dark-theme');
-    };
+    const themeBtn = document.getElementById('themeToggleBtn');
+    if (themeBtn) {
+      themeBtn.onclick = () => {
+        document.body.classList.toggle('dark-theme');
+        const isDark = document.body.classList.contains('dark-theme');
+        themeBtn.innerHTML = isDark ? '<i class="fa-solid fa-sun"></i>' : '<i class="fa-solid fa-moon"></i>';
+        this.addNotification('Theme Changed', isDark ? 'Smoky Glass mode activated' : 'Liquid Ice Glass mode activated', 'info');
+      };
+    }
   }
 
   // --- Category and Formatting Helpers ---
