@@ -1,4 +1,7 @@
 # Miscellaneous
+downloads/
+web/downloads/
+docs/downloads/
 *.class
 *.log
 *.pyc

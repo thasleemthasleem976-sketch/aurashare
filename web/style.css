@@ -139,9 +139,13 @@ body.bg-glass-folders {
   align-items: center;
   justify-content: center;
   padding: 20px;
-  background: rgba(180, 205, 225, 0.25);
-  backdrop-filter: blur(12px);
-  -webkit-backdrop-filter: blur(12px);
+  background-color: #0c0824;
+  background-image: url('login-bg.jpg');
+  background-repeat: no-repeat;
+  background-position: center center;
+  background-size: cover;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
 }
 
 .auth-card {

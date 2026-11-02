@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AuraShare – Secure Offline File Sharing</title>
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#00b4d8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AuraShare">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="shortcut icon" href="favicon.ico">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="liquid-glass-theme">
+  <!-- 0. Local Authentication Screen (Login & Account Creation) -->
+  <div id="authScreen" class="auth-screen">
+    <div class="auth-card">
+      <div class="auth-brand">
+        <div class="brand-logo-large">
+          <i class="fa-solid fa-share-nodes"></i>
+        </div>
+        <h2>AuraShare</h2>
+        <span class="auth-badge"><i class="fa-solid fa-shield-halved"></i> SECURE LOCAL AUTHENTICATION</span>
+        <p>Offline peer-to-peer file transfer. No external server or cloud connection required.</p>
+      </div>
+
+      <!-- Auth Tabs: Sign In / Create Account -->
+      <div class="auth-tabs">
+        <button id="tabBtnLogin" class="auth-tab-btn active" onclick="app.switchAuthTab('login')">
+          <i class="fa-solid fa-right-to-bracket"></i> Sign In
+        </button>
+        <button id="tabBtnRegister" class="auth-tab-btn" onclick="app.switchAuthTab('register')">
+          <i class="fa-solid fa-user-plus"></i> Create Account
+        </button>
+      </div>
+
+      <!-- Sign In Form -->
+      <form id="loginForm" class="auth-form" onsubmit="app.handleLoginForm(event)">
+        <div class="form-group">
+          <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+          <input type="email" id="loginEmail" class="input-field" placeholder="Enter your email" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="loginPassword" class="input-field" placeholder="Enter your password" required autocomplete="current-password">
+        </div>
+        <div id="loginError" class="auth-error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to AuraShare
+        </button>
+        <div class="auth-switch-link">
+          Don't have an account yet? <a href="javascript:void(0)" onclick="app.switchAuthTab('register')">Create an Account</a>
+        </div>
+      </form>
+
+      <!-- Create Account Form -->
+      <form id="registerForm" class="auth-form hidden" onsubmit="app.handleRegisterForm(event)">
+        <div class="form-group">
+          <label><i class="fa-solid fa-user"></i> Full Name</label>
+          <input type="text" id="regFullName" class="input-field" placeholder="e.g. Alex Rivera" required autocomplete="name">
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-envelope"></i> Email Address</label>
+          <input type="email" id="regEmail" class="input-field" placeholder="e.g. alex@company.local" required autocomplete="email">
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="regPassword" class="input-field" placeholder="Minimum 6 characters" required minlength="6" autocomplete="new-password">
+        </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-shield-check"></i> Confirm Password</label>
+          <input type="password" id="regConfirmPassword" class="input-field" placeholder="Re-enter password" required minlength="6" autocomplete="new-password">
+        </div>
+        <div id="registerError" class="auth-error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fa-solid fa-user-plus"></i> Create Account & Enter
+        </button>
+        <div class="auth-switch-link">
+          Already registered? <a href="javascript:void(0)" onclick="app.switchAuthTab('login')">Sign In</a>
+        </div>
+      </form>
+
+      <div class="auth-vault-note">
+        <i class="fa-solid fa-database"></i>
+        <span>Local Offline Vault: All user profiles and credentials are stored strictly on your local device.</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Incoming Transfer Modal (Global Authorization Overlay) -->
+  <div id="incomingModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="icon-bubble cyan"><i class="fa-solid fa-file-arrow-down"></i></div>
+        <div>
+          <h3>Incoming Transfer Request</h3>
+          <p id="incomingPeerInfo">From: ASUS Laptop (10.73.110.163)</p>
+        </div>
+      </div>
+      <div class="incoming-summary-box">
+        <div class="summary-row">
+          <span>Files Count:</span>
+          <strong id="incomingFileCount">1 Item</strong>
+        </div>
+        <div class="summary-row">
+          <span>Total Size:</span>
+          <strong id="incomingTotalSize" class="text-cyan">15.4 MB</strong>
+        </div>
+      </div>
+      <div id="incomingFileList" class="incoming-file-list"></div>
+      <div class="security-pill">
+        <i class="fa-solid fa-shield-halved text-success"></i>
+        <span>Direct offline stream • SHA-256 integrity protected</span>
+      </div>
+      <div class="modal-actions">
+        <button id="rejectBtn" class="btn btn-outline-danger">Reject</button>
+        <button id="acceptBtn" class="btn btn-primary">Accept & Save</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Direct IP Modal (With Live Resource Verification) -->
+  <div id="directIpModal" class="modal-backdrop hidden">
+    <div class="modal-card">
+      <div class="modal-header">
+        <div class="icon-bubble cyan"><i class="fa-solid fa-network-wired"></i></div>
+        <div>
+          <h3>Direct IP Connection</h3>
+          <p>Send directly to an active verified IP on your local Wi-Fi or Hotspot</p>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>Target IPv4 Address</label>
+        <input type="text" id="directIpInput" placeholder="e.g. 10.73.110.182" class="input-field" autocomplete="off">
+        <span class="input-hint">Must be an active device on your local subnet (random inputs rejected)</span>
+      </div>
+      <div class="form-group">
+        <label>Port</label>
+        <input type="number" id="directPortInput" value="52346" class="input-field">
+      </div>
+      <div id="directIpStatus" class="direct-ip-status hidden"></div>
+      <div id="directIpError" class="auth-error-msg hidden"></div>
+      <div class="modal-actions">
+        <button id="cancelDirectIpBtn" class="btn btn-outline">Cancel</button>
+        <button id="connectDirectIpBtn" class="btn btn-primary"><i class="fa-solid fa-bolt"></i> Probe & Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Download Offline App Modal -->
+  <div id="downloadAppModal" class="modal-backdrop hidden">
+    <div class="modal-card download-modal-card">
+      <div class="modal-header">
+        <div class="icon-bubble cyan"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+        <div>
+          <h3>Download AuraShare Offline App</h3>
+          <p>Run completely offline on any device with 100% functionality and zero cloud dependencies</p>
+        </div>
+      </div>
+      <div class="download-options-list">
+        <!-- Standalone Bundle Option -->
+        <div class="download-opt-card featured">
+          <div class="opt-icon"><i class="fa-solid fa-box-archive text-cyan"></i></div>
+          <div class="opt-text">
+            <div class="opt-title-row">
+              <h4>Standalone Offline Package (.ZIP)</h4>
+              <span class="badge success">Recommended</span>
+            </div>
+            <p>Complete offline distribution. Includes 1-click Windows launcher (<code>start_windows.bat</code>), Mac/Linux launcher (<code>start_linux_mac.sh</code>), and offline server. Zero installation needed.</p>
+            <div class="opt-actions">
+              <a href="./aurashare-offline.zip" download="AuraShare-Offline.zip" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-download"></i> Download Standalone ZIP (25 KB)
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progressive Web App Option -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-solid fa-laptop text-blue"></i></div>
+          <div class="opt-text">
+            <h4>Install as Desktop App (PWA)</h4>
+            <p>Installs AuraShare directly to your desktop or start menu via browser. Full offline cache & native window.</p>
+            <div class="opt-actions">
+              <button id="installPwaBtn" class="btn btn-outline-cyan btn-sm" onclick="app.triggerPwaInstall()">
+                <i class="fa-solid fa-arrow-down-to-bracket"></i> Install PWA App
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile / Android Direct Option -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-solid fa-mobile-screen text-green"></i></div>
+          <div class="opt-text">
+            <h4>Android / Mobile Direct Connection</h4>
+            <p>Connect phone to the same Wi-Fi or turn on Portable Hotspot, and open this URL in your mobile browser:</p>
+            <div class="mobile-lan-pill">
+              <code id="modalLanIp">http://10.73.110.163:8080</code>
+              <button class="btn-copy-sm" onclick="app.copyLanUrl()"><i class="fa-regular fa-copy"></i> Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button id="closeDownloadModalBtn" class="btn btn-outline" onclick="app.closeDownloadModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PWA Install Guide Modal -->
+  <div id="pwaInstallModal" class="modal-backdrop hidden">
+    <div class="modal-card download-modal-card">
+      <div class="modal-header">
+        <div class="icon-bubble cyan"><i class="fa-solid fa-arrow-down-to-bracket"></i></div>
+        <div>
+          <h3>Install AuraShare App</h3>
+          <p>Run AuraShare as a standalone desktop or mobile application with offline support</p>
+        </div>
+      </div>
+      
+      <!-- Dynamic Banner depending on prompt state -->
+      <div id="pwaPromptReadyBox" class="pwa-prompt-box hidden" style="background: rgba(0, 180, 216, 0.12); border: 1px solid var(--primary); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+        <div>
+          <h4 style="color: #fff; margin-bottom: 4px;"><i class="fa-solid fa-circle-check text-cyan"></i> 1-Click Install Available</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Click below to add AuraShare directly to your desktop or device launcher.</p>
+        </div>
+        <button id="pwaDirectInstallBtn" class="btn btn-primary" onclick="app.executePwaPrompt()">
+          <i class="fa-solid fa-download"></i> Install Now
+        </button>
+      </div>
+
+      <div class="download-options-list">
+        <!-- Chrome / Edge / Brave Desktop Instructions -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-brands fa-chrome text-cyan"></i></div>
+          <div class="opt-text">
+            <h4>Google Chrome, Edge & Brave (Desktop)</h4>
+            <p>1. Look at the right end of your browser's address bar.</p>
+            <p>2. Click the <strong><i class="fa-solid fa-arrow-down-to-bracket"></i> Install AuraShare</strong> icon or <strong><i class="fa-solid fa-desktop"></i> App Available</strong> icon.</p>
+            <p>3. Or click browser menu (<strong>⋮</strong> or <strong>...</strong>) &rarr; <strong>Install AuraShare</strong> or <strong>Apps &rarr; Install this site as an app</strong>.</p>
+          </div>
+        </div>
+
+        <!-- Android Chrome Instructions -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-brands fa-android text-green"></i></div>
+          <div class="opt-text">
+            <h4>Android (Chrome / Samsung Internet)</h4>
+            <p>1. Tap the <strong>⋮</strong> (three dots) menu in top right.</p>
+            <p>2. Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</p>
+            <p>3. AuraShare appears on your phone launcher like a native APK app!</p>
+          </div>
+        </div>
+
+        <!-- Localhost vs LAN Tip -->
+        <div class="download-opt-card" style="border-left: 3px solid var(--primary);">
+          <div class="opt-icon"><i class="fa-solid fa-circle-info text-blue"></i></div>
+          <div class="opt-text">
+            <h4>PWA Browser Security Note</h4>
+            <p style="margin-bottom: 0;">Browsers trigger automatic 1-click install popups on <code>http://localhost:8080</code> or over <code>HTTPS</code>. On local LAN IP addresses (e.g. <code>http://10.73.110.163:8080</code>), browsers require using the browser menu (<strong>⋮ &rarr; Install app</strong>) as shown above.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 18px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" onclick="app.closePwaGuideModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- App Shell -->
+  <div id="appShell" class="app-shell hidden">
+    <!-- Desktop Sidebar -->
+    <aside class="sidebar">
+      <div class="brand">
+        <div class="brand-logo">
+          <i class="fa-solid fa-share-nodes"></i>
+        </div>
+        <div class="brand-info">
+          <h2>AuraShare</h2>
+          <span>Offline P2P Sharing</span>
+        </div>
+      </div>
+
+      <!-- Node Network Pill -->
+      <div class="lan-node-card">
+        <div class="pulse-indicator"></div>
+        <div class="lan-node-info">
+          <span class="label">Local Node Active</span>
+          <span id="sidebarLocalIp" class="ip">10.73.110.163:52346</span>
+        </div>
+        <i class="fa-solid fa-bolt text-cyan"></i>
+      </div>
+
+      <nav class="nav-menu">
+        <div class="nav-section-label">PRIMARY SHARING</div>
+        <a href="#dashboard" class="nav-item active" data-screen="dashboard">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Dashboard</span>
+        </a>
+        <a href="#send" class="nav-item" data-screen="send">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Send Files</span>
+          <span id="stagedBadge" class="nav-badge hidden">0</span>
+        </a>
+        <a href="#receive" class="nav-item" data-screen="receive">
+          <i class="fa-solid fa-download"></i>
+          <span>Receive Files</span>
+          <span id="receiveListeningBadge" class="nav-badge success">READY</span>
+        </a>
+        <a href="#history" class="nav-item" data-screen="history">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>Transfer History</span>
+        </a>
+        <a href="javascript:void(0)" class="nav-item download-nav-highlight" onclick="app.openDownloadModal()">
+          <i class="fa-solid fa-cloud-arrow-down text-cyan"></i>
+          <span>Download App</span>
+          <span class="nav-badge info">OFFLINE</span>
+        </a>
+
+        <div class="nav-section-label">SECURITY & PREFERENCES</div>
+        <a href="#security" class="nav-item" data-screen="security">
+          <i class="fa-solid fa-shield-halved"></i>
+          <span>Security Center</span>
+        </a>
+        <a href="#offline-comm" class="nav-item" data-screen="offline-comm">
+          <i class="fa-solid fa-wifi"></i>
+          <span>Offline Network</span>
+        </a>
+        <a href="#notifications" class="nav-item" data-screen="notifications">
+          <i class="fa-solid fa-bell"></i>
+          <span>Notifications</span>
+          <span id="unreadNotifBadge" class="nav-badge danger hidden">0</span>
+        </a>
+        <a href="#settings" class="nav-item" data-screen="settings">
+          <i class="fa-solid fa-gear"></i>
+          <span>Settings</span>
+        </a>
+        <a href="#profile" class="nav-item" data-screen="profile">
+          <i class="fa-solid fa-user"></i>
+          <span>Profile</span>
+        </a>
+        <a href="#help" class="nav-item" data-screen="help">
+          <i class="fa-solid fa-circle-question"></i>
+          <span>Help & Support</span>
+        </a>
+        <a href="#developer" class="nav-item" data-screen="developer">
+          <i class="fa-solid fa-code"></i>
+          <span>Developer Info</span>
+        </a>
+      </nav>
+
+      <!-- User footer -->
+      <div class="sidebar-user">
+        <div class="user-avatar" id="sidebarAvatar">A</div>
+        <div class="user-meta">
+          <strong id="sidebarUserName">User</strong>
+          <span id="sidebarDeviceName">Offline Node</span>
+        </div>
+        <button id="logoutBtn" title="Logout" class="icon-btn-danger">
+          <i class="fa-solid fa-arrow-right-from-bracket"></i>
+        </button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <!-- Top Mobile / Responsive Bar -->
+      <header class="topbar">
+        <div class="mobile-brand">
+          <button id="mobileMenuBtn" class="icon-btn"><i class="fa-solid fa-bars"></i></button>
+          <div class="brand-logo-small"><i class="fa-solid fa-share-nodes"></i></div>
+          <span class="mobile-title">AuraShare</span>
+        </div>
+        <div class="topbar-actions">
+          <button id="topbarInstallPwaBtn" class="btn btn-outline-cyan btn-sm" onclick="app.triggerPwaInstall()" title="Install AuraShare as Desktop/Mobile PWA">
+            <i class="fa-solid fa-arrow-down-to-bracket"></i> Install App
+          </button>
+          <button id="topbarDownloadBtn" class="btn btn-primary btn-sm" onclick="app.openDownloadModal()" title="Download Standalone Offline App">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Download Offline App
+          </button>
+          <div class="status-pill online">
+            <span class="status-dot"></span>
+            <span id="topbarIp">LAN: 10.73.110.163</span>
+          </div>
+          <button id="notifBellBtn" class="icon-btn bell-btn">
+            <i class="fa-regular fa-bell"></i>
+            <span id="bellBadge" class="bell-badge hidden">0</span>
+          </button>
+          <button id="themeToggleBtn" class="icon-btn" title="Toggle Theme">
+            <i class="fa-solid fa-moon"></i>
+          </button>
+          <button id="bgToggleBtn" class="icon-btn" onclick="app.cycleBackground()" title="Change Wallpaper (iStock File Sharing / Workspace Desk)">
+            <i class="fa-solid fa-image"></i>
+          </button>
+        </div>
+      </header>
+
+      <!-- Active Ongoing Transfer Banner (if transferring) -->
+      <div id="activeTransferBanner" class="active-transfer-banner hidden">
+        <div class="transfer-banner-content">
+          <div class="transfer-info-left">
+            <div class="spinner-icon"><i class="fa-solid fa-arrows-rotate fa-spin"></i></div>
+            <div>
+              <h4 id="bannerTitle">Transferring files...</h4>
+              <p id="bannerSub">0 MB / 0 MB • 0 MB/s • ETA: 0s</p>
+            </div>
+          </div>
+          <div class="transfer-progress-center">
+            <div class="progress-track">
+              <div id="bannerProgressBar" class="progress-fill" style="width: 0%;"></div>
+            </div>
+            <span id="bannerPercent" class="percent-label">0%</span>
+          </div>
+          <div class="transfer-actions-right">
+            <button id="bannerPauseBtn" class="btn-sm btn-warning"><i class="fa-solid fa-pause"></i> Pause</button>
+            <button id="bannerCancelBtn" class="btn-sm btn-danger"><i class="fa-solid fa-xmark"></i> Cancel</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- SCREENS CONTAINER -->
+      <div class="screen-viewport">
+        <!-- 1. Dashboard Screen -->
+        <section id="screen-dashboard" class="app-screen active">
+          <div class="screen-header">
+            <div class="welcome-box">
+              <div class="badge-row">
+                <span class="badge success"><i class="fa-solid fa-wifi"></i> 100% OFFLINE LOCAL NETWORK</span>
+                <span class="badge info" id="dashIpBadge">NODE: 10.73.110.163:52346</span>
+              </div>
+              <h1 id="dashGreeting">Welcome, User 👋</h1>
+              <p id="dashSub">Direct offline peer-to-peer file transfer. Choose to Send or Receive files with automatic nearby scanning.</p>
+            </div>
+          </div>
+
+          <!-- Quick Actions: Send & Receive -->
+          <div class="section-title">CORE OPERATIONS</div>
+          <div class="quick-actions-grid two-cards">
+            <div class="action-card primary" id="quickSendCard">
+              <div class="action-icon"><i class="fa-solid fa-paper-plane"></i></div>
+              <div class="action-text">
+                <h3>Send Files</h3>
+                <p>Pick files, auto-scan nearby devices, and transfer directly</p>
+              </div>
+              <i class="fa-solid fa-chevron-right action-arrow"></i>
+            </div>
+            <div class="action-card secondary" id="quickReceiveCard">
+              <div class="action-icon"><i class="fa-solid fa-download"></i></div>
+              <div class="action-text">
+                <h3>Receive Files</h3>
+                <p>Broadcast receiving presence and listen for incoming files</p>
+              </div>
+              <i class="fa-solid fa-chevron-right action-arrow"></i>
+            </div>
+          </div>
+
+          <!-- Standalone Offline App Download Banner -->
+          <div class="download-banner-card" onclick="app.openDownloadModal()">
+            <div class="download-banner-icon"><i class="fa-solid fa-laptop-code"></i></div>
+            <div class="download-banner-text">
+              <h4>Get AuraShare Standalone Offline App</h4>
+              <p>Download the zero-install bundle with 1-click launcher for Windows, Mac & Linux. Works 100% offline anywhere without internet.</p>
+            </div>
+            <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download App</button>
+          </div>
+
+          <!-- Stats Grid -->
+          <div class="section-title">METRICS & ACTIVITY</div>
+          <div class="stats-grid">
+            <div class="stat-card">
+              <div class="stat-header">
+                <span>Nearby Devices</span>
+                <div class="stat-icon-bubble cyan"><i class="fa-solid fa-satellite-dish"></i></div>
+              </div>
+              <div class="stat-value" id="statConnectedDevs">0</div>
+              <div class="stat-sub text-cyan" id="statNearbySub">Auto-scanning on local network</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-header">
+                <span>Files Sent</span>
+                <div class="stat-icon-bubble blue"><i class="fa-solid fa-arrow-up-from-bracket"></i></div>
+              </div>
+              <div class="stat-value" id="statSentFiles">0</div>
+              <div class="stat-sub text-blue" id="statSentBytes">0 MB total</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-header">
+                <span>Files Received</span>
+                <div class="stat-icon-bubble green"><i class="fa-solid fa-arrow-down-to-bracket"></i></div>
+              </div>
+              <div class="stat-value" id="statReceivedFiles">0</div>
+              <div class="stat-sub text-green" id="statReceivedBytes">0 MB total</div>
+            </div>
+            <div class="stat-card">
+              <div class="stat-header">
+                <span>Transfer Engine</span>
+                <div class="stat-icon-bubble orange"><i class="fa-solid fa-shield"></i></div>
+              </div>
+              <div class="stat-value" id="statActiveTransfers">Idle</div>
+              <div class="stat-sub text-orange">Direct TCP • SHA-256</div>
+            </div>
+          </div>
+
+          <!-- Security Status Banner -->
+          <div class="security-banner">
+            <div class="sec-icon"><i class="fa-solid fa-shield-check"></i></div>
+            <div class="sec-text">
+              <h4>End-to-End Local Security Active</h4>
+              <p>Transfers flow strictly across your physical Wi-Fi or LAN connection. Receiver must authorize requests before files are written to disk.</p>
+            </div>
+            <button class="btn btn-outline-cyan" onclick="app.navigate('security')">Security Center</button>
+          </div>
+
+          <!-- Recent Transfers List -->
+          <div class="section-header-row">
+            <div class="section-title">RECENT TRANSFERS</div>
+            <button class="btn-link" onclick="app.navigate('history')">View All History →</button>
+          </div>
+          <div id="dashRecentList" class="history-list"></div>
+        </section>
+
+        <!-- 2. UNIFIED SEND FLOW SCREEN -->
+        <section id="screen-send" class="app-screen">
+          <div class="screen-header">
+            <h2>Send Files</h2>
+            <p>Select files, scan nearby devices, and transfer directly with one click.</p>
+          </div>
+
+          <!-- Step 1: Choose Files -->
+          <div class="flow-card">
+            <div class="flow-step-header">
+              <div class="step-badge">1</div>
+              <div>
+                <h3>Select Files to Transfer</h3>
+                <p>Choose documents, photos, videos, or folders from your device</p>
+              </div>
+              <button id="browseSendFilesBtn" class="btn btn-primary" style="margin-left:auto;">
+                <i class="fa-solid fa-folder-open"></i> Browse Files
+              </button>
+              <input type="file" id="sendRealFileInput" multiple class="hidden">
+            </div>
+
+            <!-- Staged summary & list in Send screen -->
+            <div id="sendStagedFilesContainer" class="send-staged-box">
+              <div id="sendStagedEmpty" class="send-empty-state">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>No files selected yet. Click "Browse Files" above to choose files.</p>
+              </div>
+              <div id="sendStagedList" class="staged-files-list hidden"></div>
+            </div>
+          </div>
+
+          <!-- Step 2: Choose Target Device (High-Graphics Radar HUD) -->
+          <div class="flow-card">
+            <div class="flow-step-header">
+              <div class="step-badge">2</div>
+              <div>
+                <h3>Nearby Devices Inside Scanning Area</h3>
+                <p>Real-time tactical radar scanning on UDP port 52345. Tap any peer inside the radar to transmit.</p>
+              </div>
+              <div style="margin-left: auto; display: flex; gap: 8px;">
+                <button id="sendDirectIpBtn" class="btn btn-outline-cyan btn-sm">
+                  <i class="fa-solid fa-network-wired"></i> Direct IP
+                </button>
+                <button id="sendRefreshRadarBtn" class="btn btn-outline btn-sm" title="Rescan Radar">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- High Graphics Cybernetic Radar HUD -->
+            <div class="high-graphics-radar-container">
+              <div class="radar-hud-sphere" id="radarSphere">
+                <!-- Compass / Bearing Marks -->
+                <span class="hud-bearing north">N 000°</span>
+                <span class="hud-bearing east">E 090°</span>
+                <span class="hud-bearing south">S 180°</span>
+                <span class="hud-bearing west">W 270°</span>
+
+                <!-- Concentric Range Grid Rings -->
+                <div class="hud-ring ring-100"><span class="range-tag">100m</span></div>
+                <div class="hud-ring ring-75"><span class="range-tag">75m</span></div>
+                <div class="hud-ring ring-50"><span class="range-tag">50m</span></div>
+                <div class="hud-ring ring-25"><span class="range-tag">25m</span></div>
+
+                <!-- Crosshairs -->
+                <div class="hud-crosshair-h"></div>
+                <div class="hud-crosshair-v"></div>
+
+                <!-- Rotating Radar Sweep Beam -->
+                <div class="hud-sweep-beam"></div>
+
+                <!-- Center Node (You / Host) -->
+                <div class="hud-center-node" title="Your Device (Host)">
+                  <div class="center-pulse-halo"></div>
+                  <i class="fa-solid fa-circle-dot"></i>
+                  <span class="center-label">You (Host)</span>
+                </div>
+
+                <!-- Floating Devices Layer (Plotted Directly Inside Radar) -->
+                <div id="radarDevicesLayer" class="radar-devices-layer"></div>
+
+                <!-- Empty State HUD Readout -->
+                <div id="radarEmptyHud" class="radar-empty-hud">
+                  <div class="hud-scanner-text">
+                    <span class="radar-blink-dot"></span>
+                    <span>SCANNING LOCAL FREQUENCIES (PORT 52345)</span>
+                  </div>
+                  <p>No other devices detected on this network yet.<br>Open this link in another tab or phone to connect:</p>
+                  <div class="radar-quick-actions">
+                    <button class="btn-sm btn-outline-cyan" onclick="window.open(window.location.href, '_blank')">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Open 2nd Tab to Test
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 3. UNIFIED RECEIVE FLOW SCREEN -->
+        <section id="screen-receive" class="app-screen">
+          <div class="screen-header">
+            <h2>Receive Files</h2>
+            <p>Your device is listening for incoming transfers from nearby senders.</p>
+          </div>
+
+          <div class="receive-hero-box">
+            <div class="receive-radar-visual">
+              <div class="radar-ring r1"></div>
+              <div class="radar-ring r2"></div>
+              <div class="radar-ring r3"></div>
+              <div class="receive-beacon-center">
+                <i class="fa-solid fa-tower-broadcast"></i>
+              </div>
+            </div>
+            <div class="receive-meta-box">
+              <span class="badge success"><i class="fa-solid fa-circle-check"></i> READY TO RECEIVE</span>
+              <h2 id="receiveDeviceNameDisplay">Alex's Laptop</h2>
+              <p>Other AuraShare devices on this Wi-Fi can see your device and send files to you.</p>
+              <div class="receive-info-pills">
+                <div class="pill"><i class="fa-solid fa-network-wired"></i> IP: <strong id="receiveIpDisplay">10.73.110.163</strong></div>
+                <div class="pill"><i class="fa-solid fa-plug"></i> TCP Port: <strong>52346</strong></div>
+                <div class="pill"><i class="fa-solid fa-shield-halved"></i> <strong>Auth Required</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">RECENTLY RECEIVED FILES</div>
+          <div id="receiveHistoryList" class="history-list"></div>
+        </section>
+
+        <!-- 4. Transfer History Screen -->
+        <section id="screen-history" class="app-screen">
+          <div class="screen-header-row">
+            <div>
+              <h2>Transfer History</h2>
+              <p>Persistent record of all offline file transmissions stored in your local vault.</p>
+            </div>
+            <button id="clearHistoryBtn" class="btn btn-outline-danger"><i class="fa-solid fa-trash-can"></i> Clear History</button>
+          </div>
+
+          <div class="filter-chips" id="historyFilters">
+            <button class="chip active" data-filter="all">All</button>
+            <button class="chip" data-filter="sent">Sent</button>
+            <button class="chip" data-filter="received">Received</button>
+            <button class="chip" data-filter="completed">Completed</button>
+            <button class="chip" data-filter="failed">Failed</button>
+          </div>
+
+          <div id="fullHistoryList" class="history-list"></div>
+        </section>
+
+        <!-- 5. Security Center Screen -->
+        <section id="screen-security" class="app-screen">
+          <div class="screen-header">
+            <h2>Security & Trust Center</h2>
+            <p>Device fingerprinting, cryptographic checksums, and offline permission management.</p>
+          </div>
+
+          <div class="fingerprint-card">
+            <div class="card-head">
+              <span>DEVICE VERIFICATION FINGERPRINT</span>
+              <i class="fa-solid fa-fingerprint text-cyan"></i>
+            </div>
+            <div class="fingerprint-code" id="deviceFingerprintDisplay">7F2A-94B1-D38E</div>
+            <p>Peers can verify this fingerprint before transfer to guarantee connection integrity.</p>
+          </div>
+
+          <div class="section-title">SECURITY POLICIES</div>
+          <div class="policy-card">
+            <div class="policy-item">
+              <div>
+                <strong>Require Manual Transfer Authorization</strong>
+                <p>Incoming files will never be accepted automatically without user consent.</p>
+              </div>
+              <input type="checkbox" id="policyAuthRequired" checked class="switch">
+            </div>
+            <div class="policy-item">
+              <div>
+                <strong>AES Local Obfuscation</strong>
+                <p>Obfuscate binary chunk streams across public and home Wi-Fi networks.</p>
+              </div>
+              <input type="checkbox" id="policyEncryption" checked class="switch">
+            </div>
+            <div class="policy-item">
+              <div>
+                <strong>Auto-Accept from Starred Trusted Devices</strong>
+                <p>Permit instant downloads only from starred peers.</p>
+              </div>
+              <input type="checkbox" id="policyAutoAccept" class="switch">
+            </div>
+          </div>
+
+          <div class="section-title">TRUSTED DEVICES</div>
+          <div id="trustedDevicesList" class="trusted-devices-list"></div>
+
+          <div class="airgap-guarantee">
+            <i class="fa-solid fa-cloud-slash"></i>
+            <div>
+              <h4>Air-Gapped & Zero-Cloud Guarantee</h4>
+              <p>AuraShare never connects to external cloud servers, collects telemetry, or stores your file data off this device.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 6. Offline Communication Screen -->
+        <section id="screen-offline-comm" class="app-screen">
+          <div class="screen-header">
+            <h2>Offline Communication Interface</h2>
+            <p>Socket listeners, local IP addresses, and physical Wi-Fi connection modes.</p>
+          </div>
+
+          <div class="interface-card">
+            <div class="interface-head">
+              <span class="status-indicator">● ACTIVE OFFLINE INTERFACE</span>
+              <i class="fa-solid fa-network-wired text-cyan"></i>
+            </div>
+            <div class="interface-grid">
+              <div class="row"><span>Bound Local IP:</span><strong id="commLocalIp">10.73.110.163</strong></div>
+              <div class="row"><span>TCP File Stream Port:</span><strong>52346 (Streaming Server)</strong></div>
+              <div class="row"><span>UDP Beacon Port:</span><strong>52345 (Discovery Multicast)</strong></div>
+              <div class="row"><span>Subnet Broadcast:</span><strong>255.255.255.255</strong></div>
+              <div class="row"><span>Internet Connection:</span><strong class="text-success">Not Required (0 bytes external)</strong></div>
+            </div>
+          </div>
+
+          <div class="section-title">SUPPORTED LOCAL NETWORKS</div>
+          <div class="tech-cards-grid">
+            <div class="tech-card">
+              <div class="tech-header">
+                <i class="fa-solid fa-wifi text-cyan"></i>
+                <div>
+                  <h4>Wi-Fi Router (No Internet)</h4>
+                  <span class="badge success">Recommended</span>
+                </div>
+              </div>
+              <p>Connect both devices to the same router. Files transfer directly between devices at up to 867 Mbps without consuming any data quota.</p>
+            </div>
+            <div class="tech-card">
+              <div class="tech-header">
+                <i class="fa-solid fa-mobile-screen-button text-blue"></i>
+                <div>
+                  <h4>Phone Wi-Fi Hotspot</h4>
+                  <span class="badge primary">Ultra-Portable</span>
+                </div>
+              </div>
+              <p>Turn on Portable Hotspot on your phone and connect your laptop. AuraShare works directly with zero mobile data consumption.</p>
+            </div>
+            <div class="tech-card">
+              <div class="tech-header">
+                <i class="fa-solid fa-ethernet text-green"></i>
+                <div>
+                  <h4>Ethernet Cable / LAN</h4>
+                  <span class="badge success">Gigabit Speed</span>
+                </div>
+              </div>
+              <p>Direct Ethernet cable between two PCs provides ultra-low latency, maximum security, and speeds up to 1000 Mbps.</p>
+            </div>
+          </div>
+        </section>
+
+        <!-- 7. Notifications Screen -->
+        <section id="screen-notifications" class="app-screen">
+          <div class="screen-header-row">
+            <div>
+              <h2>Notifications</h2>
+              <p>Live event log of device connections, transfer requests, and security alerts.</p>
+            </div>
+            <div class="btn-group">
+              <button id="markAllReadBtn" class="btn btn-outline"><i class="fa-solid fa-check-double"></i> Mark All Read</button>
+              <button id="clearNotifsBtn" class="btn btn-outline-danger"><i class="fa-solid fa-trash-can"></i> Clear</button>
+            </div>
+          </div>
+
+          <div id="fullNotifList" class="notif-list"></div>
+        </section>
+
+        <!-- 8. Settings Screen -->
+        <section id="screen-settings" class="app-screen">
+          <div class="screen-header-row">
+            <div>
+              <h2>Settings & Preferences</h2>
+              <p>Configure device identity, default download location, and port bindings.</p>
+            </div>
+            <button id="saveSettingsBtn" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Save Settings</button>
+          </div>
+
+          <div class="settings-card">
+            <h3>Device Identity</h3>
+            <div class="form-group">
+              <label>Device Name (Visible to peers on radar)</label>
+              <input type="text" id="settingDeviceName" class="input-field" value="AuraShare-Device">
+            </div>
+            <div class="form-group">
+              <label>Default Save Folder for Incoming Files</label>
+              <input type="text" id="settingDownloadPath" class="input-field" value="Downloads/AuraShare">
+            </div>
+          </div>
+
+          <div class="settings-card">
+            <h3>Advanced Network Ports</h3>
+            <div class="form-row">
+              <div class="form-group">
+                <label>TCP Transfer Server Port</label>
+                <input type="number" id="settingTransferPort" class="input-field" value="52346">
+              </div>
+              <div class="form-group">
+                <label>UDP Discovery Beacon Port</label>
+                <input type="number" id="settingDiscoveryPort" class="input-field" value="52345">
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 9. Profile Screen -->
+        <section id="screen-profile" class="app-screen">
+          <div class="screen-header">
+            <h2>User Profile</h2>
+            <p>Your local identity stored securely on this computer.</p>
+          </div>
+
+          <div class="profile-hero-card">
+            <div class="profile-avatar-large" id="profileAvatarLarge">A</div>
+            <div class="profile-meta">
+              <h2 id="profileNameDisplay">User</h2>
+              <p id="profileEmailDisplay">user@aurashare.local</p>
+              <div class="badge-row">
+                <span class="badge info" id="profileDeviceBadge">Device: Laptop</span>
+                <span class="badge success">Local Vault Active</span>
+              </div>
+            </div>
+          </div>
+
+          <div class="section-title">LIFETIME TRANSFER TOTALS</div>
+          <div class="profile-stats-card">
+            <div class="stat-line"><span>Total Files Sent:</span><strong id="profSentCount">0 files</strong></div>
+            <div class="stat-line"><span>Total Data Sent:</span><strong id="profSentBytes">0 MB</strong></div>
+            <div class="stat-line"><span>Total Files Received:</span><strong id="profRecvCount">0 files</strong></div>
+            <div class="stat-line"><span>Total Data Received:</span><strong id="profRecvBytes">0 MB</strong></div>
+          </div>
+        </section>
+
+        <!-- 10. Help & Support Screen -->
+        <section id="screen-help" class="app-screen">
+          <div class="screen-header">
+            <h2>Help & Support</h2>
+            <p>Guides for zero-internet transfers, troubleshooting, and FAQs.</p>
+          </div>
+
+          <div class="workflow-steps-box">
+            <h3>Unified Send & Receive Flow</h3>
+            <div class="step-card">
+              <div class="step-num">1</div>
+              <div class="step-text">
+                <strong>Click Send or Receive</strong>
+                <p>No separate connect step. When you click Send, AuraShare auto-scans nearby peers. When you click Receive, it begins listening.</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-num">2</div>
+              <div class="step-text">
+                <strong>Choose Files & Tap Device</strong>
+                <p>Pick files from your device, then simply click on the detected peer card. The transfer initiates instantly.</p>
+              </div>
+            </div>
+            <div class="step-card">
+              <div class="step-num">3</div>
+              <div class="step-text">
+                <strong>Receiver Authorizes & Saves</strong>
+                <p>The receiver accepts the prompt, and the file streams directly over local TCP at up to 867 Mbps without internet data.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <!-- 11. Developer Info Screen -->
+        <section id="screen-developer" class="app-screen">
+          <div class="screen-header">
+            <h2>Developer Information</h2>
+            <p>Protocol framing, socket structures, and architecture invariants.</p>
+          </div>
+
+          <div class="dev-spec-card">
+            <h3>Architecture Specifications</h3>
+            <div class="spec-row"><span>Architecture:</span><strong>Offline-First Peer-to-Peer (P2P)</strong></div>
+            <div class="spec-row"><span>Discovery Protocol:</span><strong>UDP Multicast (Port 52345)</strong></div>
+            <div class="spec-row"><span>Transfer Protocol:</span><strong>Length-Prefixed Framing on TCP (Port 52346)</strong></div>
+            <div class="spec-row"><span>Integrity Guard:</span><strong>SHA-256 Digest on Byte Stream</strong></div>
+            <div class="spec-row"><span>Obfuscation:</span><strong>AES-GCM / Symmetric XOR Stream</strong></div>
+          </div>
+
+          <div class="section-title">UDP DISCOVERY BEACON SCHEMA</div>
+          <pre class="code-block">{
+  "aura_protocol": "aurashare_v1",
+  "type": "AURASHARE_BEACON",
+  "id": "device_uuid_v4",
+  "name": "ASUS Laptop",
+  "platform": "windows",
+  "ip": "10.73.110.163",
+  "port": 52346
+}</pre>
+        </section>
+      </div>
+
+      <!-- Mobile Bottom Navigation -->
+      <nav class="mobile-nav">
+        <a href="#dashboard" class="mobile-nav-item active" data-screen="dashboard">
+          <i class="fa-solid fa-gauge-high"></i>
+          <span>Home</span>
+        </a>
+        <a href="#send" class="mobile-nav-item" data-screen="send">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Send</span>
+        </a>
+        <a href="#receive" class="mobile-nav-item" data-screen="receive">
+          <i class="fa-solid fa-download"></i>
+          <span>Receive</span>
+        </a>
+        <a href="#history" class="mobile-nav-item" data-screen="history">
+          <i class="fa-solid fa-clock-rotate-left"></i>
+          <span>History</span>
+        </a>
+      </nav>
+    </main>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>

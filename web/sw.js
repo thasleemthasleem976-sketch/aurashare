@@ -1,11 +1,12 @@
 // AuraShare Offline Service Worker
-const CACHE_NAME = 'aurashare-v4';
+const CACHE_NAME = 'aurashare-v5';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
   './manifest.json',
+  './login-bg.jpg',
   './file-sharing-bg.jpg',
   './workspace-bg.png',
   './glass-folders-bg.jpg',

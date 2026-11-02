@@ -74,6 +74,7 @@ FEATURES:
         ("web/file-sharing-bg.jpg", "file-sharing-bg.jpg"),
         ("web/workspace-bg.png", "workspace-bg.png"),
         ("web/glass-folders-bg.jpg", "glass-folders-bg.jpg"),
+        ("web/login-bg.jpg", "login-bg.jpg"),
         ("web/icon-192.png", "icon-192.png"),
         ("web/icon-512.png", "icon-512.png"),
         ("web/icon-maskable-512.png", "icon-maskable-512.png"),
