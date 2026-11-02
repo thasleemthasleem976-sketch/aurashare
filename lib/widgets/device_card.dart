@@ -157,13 +157,14 @@ class DeviceCard extends StatelessWidget {
                     onPressed: onDisconnect,
                     child: const Text('Disconnect', style: TextStyle(fontSize: 12)),
                   )
-                : ElevatedButton(
+                : ElevatedButton.icon(
                     style: ElevatedButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                       minimumSize: Size.zero,
                     ),
+                    icon: const Icon(Icons.send, size: 14),
+                    label: const Text('Send', style: TextStyle(fontSize: 12)),
                     onPressed: onConnect,
-                    child: const Text('Connect', style: TextStyle(fontSize: 12)),
                   ),
           ],
         ),

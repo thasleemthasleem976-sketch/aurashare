@@ -11,7 +11,7 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-theme">
-  <!-- Incoming Transfer Modal (Global Overlay) -->
+  <!-- Incoming Transfer Modal (Global Authorization Overlay) -->
   <div id="incomingModal" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
@@ -34,11 +34,11 @@
       <div id="incomingFileList" class="incoming-file-list"></div>
       <div class="security-pill">
         <i class="fa-solid fa-shield-halved text-success"></i>
-        <span>Direct local P2P transfer • SHA-256 integrity protected</span>
+        <span>Direct offline stream • SHA-256 integrity protected</span>
       </div>
       <div class="modal-actions">
         <button id="rejectBtn" class="btn btn-outline-danger">Reject</button>
-        <button id="acceptBtn" class="btn btn-primary">Accept & Download</button>
+        <button id="acceptBtn" class="btn btn-primary">Accept & Save</button>
       </div>
     </div>
   </div>
@@ -50,7 +50,7 @@
         <div class="icon-bubble cyan"><i class="fa-solid fa-network-wired"></i></div>
         <div>
           <h3>Direct IP Connection</h3>
-          <p>Connect to an AuraShare node across your LAN or Hotspot</p>
+          <p>Send directly to an IP on your Wi-Fi or Hotspot</p>
         </div>
       </div>
       <div class="form-group">
@@ -63,7 +63,7 @@
       </div>
       <div class="modal-actions">
         <button id="cancelDirectIpBtn" class="btn btn-outline">Cancel</button>
-        <button id="connectDirectIpBtn" class="btn btn-primary">Probe & Connect</button>
+        <button id="connectDirectIpBtn" class="btn btn-primary">Select & Send</button>
       </div>
     </div>
   </div>
@@ -93,25 +93,20 @@
       </div>
 
       <nav class="nav-menu">
-        <div class="nav-section-label">MAIN OPERATIONS</div>
+        <div class="nav-section-label">PRIMARY SHARING</div>
         <a href="#dashboard" class="nav-item active" data-screen="dashboard">
           <i class="fa-solid fa-gauge-high"></i>
           <span>Dashboard</span>
         </a>
-        <a href="#discovery" class="nav-item" data-screen="discovery">
-          <i class="fa-solid fa-satellite-dish"></i>
-          <span>Device Discovery</span>
-          <span id="nearbyBadge" class="nav-badge hidden">0</span>
-        </a>
-        <a href="#files" class="nav-item" data-screen="files">
-          <i class="fa-solid fa-folder-open"></i>
-          <span>File Management</span>
+        <a href="#send" class="nav-item" data-screen="send">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Send Files</span>
           <span id="stagedBadge" class="nav-badge hidden">0</span>
         </a>
-        <a href="#transfer" class="nav-item" data-screen="transfer">
-          <i class="fa-solid fa-arrow-right-arrow-left"></i>
-          <span>File Transfer</span>
-          <span id="transferBadge" class="nav-badge warning hidden">1</span>
+        <a href="#receive" class="nav-item" data-screen="receive">
+          <i class="fa-solid fa-download"></i>
+          <span>Receive Files</span>
+          <span id="receiveListeningBadge" class="nav-badge success">READY</span>
         </a>
         <a href="#history" class="nav-item" data-screen="history">
           <i class="fa-solid fa-clock-rotate-left"></i>
@@ -221,18 +216,18 @@
                 <span class="badge info" id="dashIpBadge">NODE: 10.73.110.163:52346</span>
               </div>
               <h1 id="dashGreeting">Welcome, User 👋</h1>
-              <p id="dashSub">Direct offline peer-to-peer file transfer ready. No internet, cloud, or third-party servers needed.</p>
+              <p id="dashSub">Direct offline peer-to-peer file transfer. Choose to Send or Receive files with automatic nearby scanning.</p>
             </div>
           </div>
 
-          <!-- Quick Actions -->
-          <div class="section-title">QUICK ACTIONS</div>
-          <div class="quick-actions-grid">
+          <!-- Quick Actions: Send & Receive -->
+          <div class="section-title">CORE OPERATIONS</div>
+          <div class="quick-actions-grid two-cards">
             <div class="action-card primary" id="quickSendCard">
               <div class="action-icon"><i class="fa-solid fa-paper-plane"></i></div>
               <div class="action-text">
-                <h3>Quick Send</h3>
-                <p>Browse local files and stream to peer</p>
+                <h3>Send Files</h3>
+                <p>Pick files, auto-scan nearby devices, and transfer directly</p>
               </div>
               <i class="fa-solid fa-chevron-right action-arrow"></i>
             </div>
@@ -240,15 +235,7 @@
               <div class="action-icon"><i class="fa-solid fa-download"></i></div>
               <div class="action-text">
                 <h3>Receive Files</h3>
-                <p>Listen for incoming transfer requests</p>
-              </div>
-              <i class="fa-solid fa-chevron-right action-arrow"></i>
-            </div>
-            <div class="action-card tertiary" id="quickScanCard">
-              <div class="action-icon"><i class="fa-solid fa-satellite-dish"></i></div>
-              <div class="action-text">
-                <h3>Scan Nearby</h3>
-                <p>Discover live nodes on local network</p>
+                <p>Broadcast receiving presence and listen for incoming files</p>
               </div>
               <i class="fa-solid fa-chevron-right action-arrow"></i>
             </div>
@@ -259,11 +246,11 @@
           <div class="stats-grid">
             <div class="stat-card">
               <div class="stat-header">
-                <span>Connected Devices</span>
-                <div class="stat-icon-bubble cyan"><i class="fa-solid fa-laptop-file"></i></div>
+                <span>Nearby Devices</span>
+                <div class="stat-icon-bubble cyan"><i class="fa-solid fa-satellite-dish"></i></div>
               </div>
               <div class="stat-value" id="statConnectedDevs">0</div>
-              <div class="stat-sub text-cyan" id="statNearbySub">0 nearby peers available</div>
+              <div class="stat-sub text-cyan" id="statNearbySub">Auto-scanning on local network</div>
             </div>
             <div class="stat-card">
               <div class="stat-header">
@@ -283,11 +270,11 @@
             </div>
             <div class="stat-card">
               <div class="stat-header">
-                <span>Active Status</span>
+                <span>Transfer Engine</span>
                 <div class="stat-icon-bubble orange"><i class="fa-solid fa-shield"></i></div>
               </div>
               <div class="stat-value" id="statActiveTransfers">Idle</div>
-              <div class="stat-sub text-orange">SHA-256 Protected</div>
+              <div class="stat-sub text-orange">Direct TCP • SHA-256</div>
             </div>
           </div>
 
@@ -309,127 +296,99 @@
           <div id="dashRecentList" class="history-list"></div>
         </section>
 
-        <!-- 2. Device Discovery Screen -->
-        <section id="screen-discovery" class="app-screen">
-          <div class="screen-header-row">
-            <div>
-              <h2>Nearby Device Discovery</h2>
-              <p>Discover real AuraShare peers broadcasting across your Wi-Fi or Hotspot.</p>
-            </div>
-            <button id="directIpBtn" class="btn btn-outline"><i class="fa-solid fa-plus"></i> Direct IP</button>
+        <!-- 2. UNIFIED SEND FLOW SCREEN -->
+        <section id="screen-send" class="app-screen">
+          <div class="screen-header">
+            <h2>Send Files</h2>
+            <p>Select files, scan nearby devices, and transfer directly with one click.</p>
           </div>
 
-          <!-- Radar Scanner Component -->
-          <div class="radar-box">
-            <div class="radar-visual">
+          <!-- Step 1: Choose Files -->
+          <div class="flow-card">
+            <div class="flow-step-header">
+              <div class="step-badge">1</div>
+              <div>
+                <h3>Select Files to Transfer</h3>
+                <p>Choose documents, photos, videos, or folders from your device</p>
+              </div>
+              <button id="browseSendFilesBtn" class="btn btn-primary" style="margin-left:auto;">
+                <i class="fa-solid fa-folder-open"></i> Browse Files
+              </button>
+              <input type="file" id="sendRealFileInput" multiple class="hidden">
+            </div>
+
+            <!-- Staged summary & list in Send screen -->
+            <div id="sendStagedFilesContainer" class="send-staged-box">
+              <div id="sendStagedEmpty" class="send-empty-state">
+                <i class="fa-solid fa-cloud-arrow-up"></i>
+                <p>No files selected yet. Click "Browse Files" above to choose files.</p>
+              </div>
+              <div id="sendStagedList" class="staged-files-list hidden"></div>
+            </div>
+          </div>
+
+          <!-- Step 2: Choose Target Device (Auto-scanning nearby) -->
+          <div class="flow-card">
+            <div class="flow-step-header">
+              <div class="step-badge">2</div>
+              <div>
+                <h3>Select Nearby Device to Send</h3>
+                <p>Scanning your Wi-Fi/Hotspot in real-time. Simply click any device to send!</p>
+              </div>
+              <div style="margin-left: auto; display: flex; gap: 8px;">
+                <button id="sendDirectIpBtn" class="btn btn-outline-cyan btn-sm">
+                  <i class="fa-solid fa-network-wired"></i> Direct IP
+                </button>
+                <button id="sendRefreshRadarBtn" class="btn btn-outline btn-sm" title="Rescan">
+                  <i class="fa-solid fa-arrows-rotate"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- Radar scanner bar -->
+            <div class="radar-scan-bar">
+              <div class="radar-pulse-dot"></div>
+              <span>Scanning local network on UDP port 52345...</span>
+            </div>
+
+            <!-- Discovered Devices Grid -->
+            <div id="sendDevicesGrid" class="send-devices-grid"></div>
+          </div>
+        </section>
+
+        <!-- 3. UNIFIED RECEIVE FLOW SCREEN -->
+        <section id="screen-receive" class="app-screen">
+          <div class="screen-header">
+            <h2>Receive Files</h2>
+            <p>Your device is listening for incoming transfers from nearby senders.</p>
+          </div>
+
+          <div class="receive-hero-box">
+            <div class="receive-radar-visual">
               <div class="radar-ring r1"></div>
               <div class="radar-ring r2"></div>
               <div class="radar-ring r3"></div>
-              <div class="radar-sweep" id="radarSweep"></div>
-              <div class="radar-center"><i class="fa-solid fa-tower-broadcast"></i></div>
-            </div>
-            <div class="radar-details">
-              <div class="badge-row">
-                <span class="badge primary" id="radarStatusBadge">RADAR ACTIVE</span>
-                <span class="badge dark">UDP PORT: 52345</span>
+              <div class="receive-beacon-center">
+                <i class="fa-solid fa-tower-broadcast"></i>
               </div>
-              <h3>Continuous Peer Detection</h3>
-              <p>Broadcasting beacons across the local subnet. Open AuraShare in another browser tab or device on this Wi-Fi to watch it appear automatically!</p>
-              <div class="radar-controls">
-                <button id="toggleScanBtn" class="btn btn-primary"><i class="fa-solid fa-stop"></i> Stop Scanning</button>
-                <button id="refreshScanBtn" class="btn btn-outline" title="Refresh"><i class="fa-solid fa-arrows-rotate"></i> Refresh</button>
+            </div>
+            <div class="receive-meta-box">
+              <span class="badge success"><i class="fa-solid fa-circle-check"></i> READY TO RECEIVE</span>
+              <h2 id="receiveDeviceNameDisplay">Alex's Laptop</h2>
+              <p>Other AuraShare devices on this Wi-Fi can see your device and send files to you.</p>
+              <div class="receive-info-pills">
+                <div class="pill"><i class="fa-solid fa-network-wired"></i> IP: <strong id="receiveIpDisplay">10.73.110.163</strong></div>
+                <div class="pill"><i class="fa-solid fa-plug"></i> TCP Port: <strong>52346</strong></div>
+                <div class="pill"><i class="fa-solid fa-shield-halved"></i> <strong>Auth Required</strong></div>
               </div>
             </div>
           </div>
 
-          <div class="section-title">AVAILABLE DEVICES (<span id="devicesCount">0</span>)</div>
-          <div id="deviceList" class="devices-list"></div>
+          <div class="section-title">RECENTLY RECEIVED FILES</div>
+          <div id="receiveHistoryList" class="history-list"></div>
         </section>
 
-        <!-- 3. File Management Screen -->
-        <section id="screen-files" class="app-screen">
-          <div class="screen-header-row">
-            <div>
-              <h2>File Management</h2>
-              <p>Stage real local files from your computer or phone for offline transfer.</p>
-            </div>
-            <button id="browseFilesBtn" class="btn btn-primary"><i class="fa-solid fa-file-circle-plus"></i> Browse Local Files</button>
-            <input type="file" id="realFileInput" multiple class="hidden">
-          </div>
-
-          <!-- Category Chips -->
-          <div class="filter-chips" id="fileCategoryChips">
-            <button class="chip active" data-cat="all">All Files</button>
-            <button class="chip" data-cat="document"><i class="fa-solid fa-file-lines"></i> Documents</button>
-            <button class="chip" data-cat="image"><i class="fa-solid fa-image"></i> Images</button>
-            <button class="chip" data-cat="video"><i class="fa-solid fa-film"></i> Videos</button>
-            <button class="chip" data-cat="audio"><i class="fa-solid fa-music"></i> Audio</button>
-            <button class="chip" data-cat="archive"><i class="fa-solid fa-file-zipper"></i> Archives</button>
-            <button class="chip" data-cat="app"><i class="fa-brands fa-android"></i> Apps</button>
-          </div>
-
-          <!-- Staged Toolbar -->
-          <div id="stagedToolbar" class="staged-toolbar">
-            <div class="toolbar-left">
-              <input type="checkbox" id="selectAllCheckbox" checked>
-              <label for="selectAllCheckbox" id="selectedSummaryText">0 of 0 selected (0 MB)</label>
-            </div>
-            <div class="toolbar-right">
-              <button id="clearAllFilesBtn" class="btn-link danger">Clear All</button>
-              <button id="sendStagedBtn" class="btn btn-primary"><i class="fa-solid fa-paper-plane"></i> Send to Device</button>
-            </div>
-          </div>
-
-          <div id="stagedFileList" class="staged-files-list"></div>
-        </section>
-
-        <!-- 4. File Transfer Screen -->
-        <section id="screen-transfer" class="app-screen">
-          <div class="screen-header">
-            <h2>File Transmission Hub</h2>
-            <p>Direct TCP stream pipeline with real-time transfer stats and pause/resume controls.</p>
-          </div>
-
-          <div class="transfer-staging-card">
-            <h3>Ready to Transfer</h3>
-            <div class="target-peer-row">
-              <div class="target-icon"><i class="fa-solid fa-laptop-code"></i></div>
-              <div class="target-info">
-                <span class="label">Target Receiver</span>
-                <strong id="targetPeerName">No Target Selected</strong>
-                <p id="targetPeerIp">Connect to a peer from the Device Discovery radar first</p>
-              </div>
-              <button class="btn btn-outline-cyan" onclick="app.navigate('discovery')">Change Peer</button>
-            </div>
-
-            <div class="target-peer-row">
-              <div class="target-icon"><i class="fa-solid fa-folder-tree"></i></div>
-              <div class="target-info">
-                <span class="label">Selected Files</span>
-                <strong id="transferStagedSummary">0 files staged</strong>
-                <p id="transferStagedPayload">Total Payload: 0 MB</p>
-              </div>
-              <button class="btn btn-outline-cyan" onclick="app.navigate('files')">Select Files</button>
-            </div>
-
-            <div class="transfer-initiate-row">
-              <button id="startTransferBtn" class="btn btn-primary btn-large" disabled>
-                <i class="fa-solid fa-paper-plane"></i> Initiate Direct Transfer Request
-              </button>
-            </div>
-          </div>
-
-          <!-- Listening Status Card -->
-          <div class="listener-card">
-            <div class="listener-icon"><i class="fa-solid fa-tower-cell"></i></div>
-            <div class="listener-text">
-              <h4>Incoming Transfer Listener Active</h4>
-              <p>Your node is actively listening on TCP port 52346. When a nearby peer requests to send files, an authorization prompt will appear on your screen.</p>
-            </div>
-          </div>
-        </section>
-
-        <!-- 5. Transfer History Screen -->
+        <!-- 4. Transfer History Screen -->
         <section id="screen-history" class="app-screen">
           <div class="screen-header-row">
             <div>
@@ -450,7 +409,7 @@
           <div id="fullHistoryList" class="history-list"></div>
         </section>
 
-        <!-- 6. Security Center Screen -->
+        <!-- 5. Security Center Screen -->
         <section id="screen-security" class="app-screen">
           <div class="screen-header">
             <h2>Security & Trust Center</h2>
@@ -503,7 +462,7 @@
           </div>
         </section>
 
-        <!-- 7. Offline Communication Screen -->
+        <!-- 6. Offline Communication Screen -->
         <section id="screen-offline-comm" class="app-screen">
           <div class="screen-header">
             <h2>Offline Communication Interface</h2>
@@ -559,7 +518,7 @@
           </div>
         </section>
 
-        <!-- 8. Notifications Screen -->
+        <!-- 7. Notifications Screen -->
         <section id="screen-notifications" class="app-screen">
           <div class="screen-header-row">
             <div>
@@ -575,7 +534,7 @@
           <div id="fullNotifList" class="notif-list"></div>
         </section>
 
-        <!-- 9. Settings Screen -->
+        <!-- 8. Settings Screen -->
         <section id="screen-settings" class="app-screen">
           <div class="screen-header-row">
             <div>
@@ -612,7 +571,7 @@
           </div>
         </section>
 
-        <!-- 10. Profile Screen -->
+        <!-- 9. Profile Screen -->
         <section id="screen-profile" class="app-screen">
           <div class="screen-header">
             <h2>User Profile</h2>
@@ -640,7 +599,7 @@
           </div>
         </section>
 
-        <!-- 11. Help & Support Screen -->
+        <!-- 10. Help & Support Screen -->
         <section id="screen-help" class="app-screen">
           <div class="screen-header">
             <h2>Help & Support</h2>
@@ -648,39 +607,32 @@
           </div>
 
           <div class="workflow-steps-box">
-            <h3>How to Share Files in 4 Steps</h3>
+            <h3>Unified Send & Receive Flow</h3>
             <div class="step-card">
               <div class="step-num">1</div>
               <div class="step-text">
-                <strong>Connect Devices Locally</strong>
-                <p>Connect both devices to the same Wi-Fi router, or turn on Mobile Hotspot on one device and connect the other. Internet is not required.</p>
+                <strong>Click Send or Receive</strong>
+                <p>No separate connect step. When you click Send, AuraShare auto-scans nearby peers. When you click Receive, it begins listening.</p>
               </div>
             </div>
             <div class="step-card">
               <div class="step-num">2</div>
               <div class="step-text">
-                <strong>Discover Nearby Device</strong>
-                <p>Open AuraShare on both devices. Click "Scan Nearby Devices" to let UDP multicast announce and locate the peer.</p>
+                <strong>Choose Files & Tap Device</strong>
+                <p>Pick files from your device, then simply click on the detected peer card. The transfer initiates instantly.</p>
               </div>
             </div>
             <div class="step-card">
               <div class="step-num">3</div>
               <div class="step-text">
-                <strong>Select Files</strong>
-                <p>In File Management, click "Browse Local Files" and pick documents, videos, photos, or archives.</p>
-              </div>
-            </div>
-            <div class="step-card">
-              <div class="step-num">4</div>
-              <div class="step-text">
-                <strong>Authorize & Transfer</strong>
-                <p>The receiver sees an authorization pop-up. Once accepted, files stream over TCP directly at maximum hardware speed.</p>
+                <strong>Receiver Authorizes & Saves</strong>
+                <p>The receiver accepts the prompt, and the file streams directly over local TCP at up to 867 Mbps without internet data.</p>
               </div>
             </div>
           </div>
         </section>
 
-        <!-- 12. Developer Info Screen -->
+        <!-- 11. Developer Info Screen -->
         <section id="screen-developer" class="app-screen">
           <div class="screen-header">
             <h2>Developer Information</h2>
@@ -715,17 +667,13 @@
           <i class="fa-solid fa-gauge-high"></i>
           <span>Home</span>
         </a>
-        <a href="#discovery" class="mobile-nav-item" data-screen="discovery">
-          <i class="fa-solid fa-satellite-dish"></i>
-          <span>Radar</span>
+        <a href="#send" class="mobile-nav-item" data-screen="send">
+          <i class="fa-solid fa-paper-plane"></i>
+          <span>Send</span>
         </a>
-        <a href="#files" class="mobile-nav-item" data-screen="files">
-          <i class="fa-solid fa-folder-open"></i>
-          <span>Files</span>
-        </a>
-        <a href="#transfer" class="mobile-nav-item" data-screen="transfer">
-          <i class="fa-solid fa-arrow-right-arrow-left"></i>
-          <span>Transfer</span>
+        <a href="#receive" class="mobile-nav-item" data-screen="receive">
+          <i class="fa-solid fa-download"></i>
+          <span>Receive</span>
         </a>
         <a href="#history" class="mobile-nav-item" data-screen="history">
           <i class="fa-solid fa-clock-rotate-left"></i>

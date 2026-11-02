@@ -217,13 +217,13 @@ class DashboardScreen extends StatelessWidget {
             flex: isNarrow ? 0 : 1,
             child: _buildActionButton(
               icon: Icons.send_rounded,
-              label: 'Quick Send',
-              subtitle: 'Select & transmit files',
+              label: 'Send Files',
+              subtitle: 'Pick files & tap nearby device',
               gradient: AppColors.primaryGradient,
               onTap: () async {
                 await fileProvider.pickFiles();
-                if (context.mounted && fileProvider.selectedFiles.isNotEmpty) {
-                  context.go('/files');
+                if (context.mounted) {
+                  context.go('/transfer');
                 }
               },
             ),
@@ -234,24 +234,12 @@ class DashboardScreen extends StatelessWidget {
             child: _buildActionButton(
               icon: Icons.download_rounded,
               label: 'Receive Files',
-              subtitle: 'Listen for incoming files',
+              subtitle: 'Listen for incoming transfers',
               color: AppColors.surfaceDark,
               borderColor: AppColors.primary.withOpacity(0.4),
-              onTap: () => context.go('/transfer'),
-            ),
-          ),
-          SizedBox(width: isNarrow ? 0 : 12, height: isNarrow ? 10 : 0),
-          Expanded(
-            flex: isNarrow ? 0 : 1,
-            child: _buildActionButton(
-              icon: Icons.radar,
-              label: 'Scan Nearby',
-              subtitle: 'Find discoverable peers',
-              color: AppColors.surfaceDark,
-              borderColor: AppColors.borderDark,
               onTap: () {
                 deviceProvider.toggleScanning();
-                context.go('/discovery');
+                context.go('/transfer');
               },
             ),
           ),

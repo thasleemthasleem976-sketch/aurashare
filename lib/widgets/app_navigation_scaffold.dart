@@ -34,9 +34,9 @@ class AppNavigationScaffold extends StatelessWidget {
 
   static const List<NavigationItem> primaryNavItems = [
     NavigationItem(title: 'Dashboard', icon: Icons.dashboard_outlined, route: '/dashboard'),
-    NavigationItem(title: 'Device Discovery', icon: Icons.radar, route: '/discovery'),
+    NavigationItem(title: 'Send & Receive', icon: Icons.swap_horiz, route: '/transfer'),
     NavigationItem(title: 'File Management', icon: Icons.folder_open, route: '/files'),
-    NavigationItem(title: 'File Transfer', icon: Icons.swap_horiz, route: '/transfer'),
+    NavigationItem(title: 'Device Radar', icon: Icons.radar, route: '/discovery'),
     NavigationItem(title: 'Transfer History', icon: Icons.history, route: '/history'),
   ];
 

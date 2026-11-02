@@ -7,6 +7,7 @@ import '../../providers/file_management_provider.dart';
 import '../../theme/app_colors.dart';
 import '../../widgets/transfer_progress_card.dart';
 import '../../models/transfer_session_model.dart';
+import '../../models/device_model.dart';
 
 class FileTransferScreen extends StatelessWidget {
   const FileTransferScreen({super.key});
@@ -18,8 +19,8 @@ class FileTransferScreen extends StatelessWidget {
     final fileProvider = context.watch<FileManagementProvider>();
     final activeSession = transferProvider.activeSession;
 
-    final targetDevice = deviceProvider.connectedDevice;
     final selectedFiles = fileProvider.selectedFiles;
+    final devices = deviceProvider.devices;
 
     return Scaffold(
       backgroundColor: AppColors.backgroundDark,
@@ -29,18 +30,28 @@ class FileTransferScreen extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
-            const Text(
-              'File Transmission Hub',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-            ),
-            const SizedBox(height: 4),
-            const Text(
-              'Real-time streaming over local offline socket connection.',
-              style: TextStyle(fontSize: 13, color: AppColors.textSecondaryDark),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    Text(
+                      'Send & Transfer Hub',
+                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+                    ),
+                    SizedBox(height: 4),
+                    Text(
+                      'Choose files and select a nearby device to stream directly without separate connection setup.',
+                      style: TextStyle(fontSize: 13, color: AppColors.textSecondaryDark),
+                    ),
+                  ],
+                ),
+              ],
             ),
             const SizedBox(height: 24),
 
-            // Active Transfer View
+            // Active Transfer View (if running)
             if (activeSession != null) ...[
               TransferProgressCard(
                 session: activeSession,
@@ -127,168 +138,236 @@ class FileTransferScreen extends StatelessWidget {
                   );
                 },
               ),
-            ] else ...[
-              // Ready to Transfer Staging Box
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: AppColors.cardDark,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppColors.borderDark),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Ready to Transfer',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.white),
-                        ),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: targetDevice != null
-                                ? AppColors.success.withOpacity(0.15)
-                                : AppColors.warning.withOpacity(0.15),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: Text(
-                            targetDevice != null ? 'PEER CONNECTED' : 'NO PEER SELECTED',
-                            style: TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                              color: targetDevice != null ? AppColors.success : AppColors.warning,
+              const SizedBox(height: 28),
+            ],
+
+            // Step 1: Choose Files Card
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.cardDark,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.borderDark),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppColors.primaryGradient,
                             ),
+                            alignment: Alignment.center,
+                            child: const Text('1', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
                           ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Choose Files to Transfer',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                          ),
+                        ],
+                      ),
+                      ElevatedButton.icon(
+                        icon: const Icon(Icons.add, size: 18),
+                        label: const Text('Browse Files'),
+                        onPressed: () => fileProvider.pickFiles(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+                  if (selectedFiles.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(24),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppColors.borderDark),
+                      ),
+                      child: Column(
+                        children: const [
+                          Icon(Icons.folder_open, size: 36, color: AppColors.textSecondaryDark),
+                          SizedBox(height: 8),
+                          Text(
+                            'No files selected yet. Click "Browse Files" to choose files.',
+                            style: TextStyle(fontSize: 13, color: AppColors.textSecondaryDark),
+                          ),
+                        ],
+                      ),
+                    )
+                  else
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          '${selectedFiles.length} file(s) selected • Total: ${fileProvider.formattedSelectedSize}',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: AppColors.primary),
+                        ),
+                        const SizedBox(height: 10),
+                        Wrap(
+                          spacing: 8,
+                          runSpacing: 8,
+                          children: selectedFiles.map((f) {
+                            return Chip(
+                              backgroundColor: AppColors.surfaceDark,
+                              avatar: const Icon(Icons.insert_drive_file, size: 16, color: AppColors.primary),
+                              label: Text('${f.name} (${f.formattedSize})', style: const TextStyle(fontSize: 12, color: Colors.white)),
+                              deleteIcon: const Icon(Icons.close, size: 14),
+                              onDeleted: () => fileProvider.removeFile(f.id),
+                            );
+                          }).toList(),
                         ),
                       ],
                     ),
-                    const SizedBox(height: 20),
-
-                    // Target Device Status Row
-                    ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppColors.borderDark),
-                      ),
-                      tileColor: AppColors.surfaceDark,
-                      leading: const Icon(Icons.devices, color: AppColors.primary),
-                      title: Text(
-                        targetDevice?.name ?? 'No Target Device Connected',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      subtitle: Text(
-                        targetDevice != null
-                            ? '${targetDevice.platform.displayName} • ${targetDevice.ipAddress}:${targetDevice.port}'
-                            : 'Select a nearby device to send files',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryDark),
-                      ),
-                      trailing: TextButton(
-                        onPressed: () => context.go('/discovery'),
-                        child: Text(
-                          targetDevice != null ? 'Change Peer' : 'Discover',
-                          style: const TextStyle(color: AppColors.primary),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // Selected Files Summary Row
-                    ListTile(
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                        side: const BorderSide(color: AppColors.borderDark),
-                      ),
-                      tileColor: AppColors.surfaceDark,
-                      leading: const Icon(Icons.folder_copy_outlined, color: AppColors.accent),
-                      title: Text(
-                        '${selectedFiles.length} file(s) staged for transfer',
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
-                      ),
-                      subtitle: Text(
-                        selectedFiles.isNotEmpty
-                            ? 'Total Payload: ${fileProvider.formattedSelectedSize}'
-                            : 'Browse local files to build a transfer queue',
-                        style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryDark),
-                      ),
-                      trailing: TextButton(
-                        onPressed: () => context.go('/files'),
-                        child: Text(
-                          selectedFiles.isNotEmpty ? 'Edit Files' : 'Select Files',
-                          style: const TextStyle(color: AppColors.accent),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 28),
-
-                    // Start Transfer Action
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        icon: const Icon(Icons.send_rounded),
-                        label: const Text('Initiate Direct Transfer Request'),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
-                        ),
-                        onPressed: (targetDevice != null && selectedFiles.isNotEmpty)
-                            ? () async {
-                                await transferProvider.startSend(
-                                  peerIp: targetDevice.ipAddress,
-                                  peerPort: targetDevice.port,
-                                  peerDeviceId: targetDevice.id,
-                                  peerDeviceName: targetDevice.name,
-                                  files: selectedFiles,
-                                );
-                              }
-                            : null,
-                      ),
-                    ),
-                  ],
-                ),
+                ],
               ),
-              const SizedBox(height: 24),
+            ),
+            const SizedBox(height: 24),
 
-              // Listening Mode Pill
-              Container(
-                padding: const EdgeInsets.all(18),
-                decoration: BoxDecoration(
-                  color: AppColors.surfaceDark,
-                  borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: AppColors.borderDark),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(10),
-                      decoration: BoxDecoration(
-                        color: AppColors.primary.withOpacity(0.15),
-                        shape: BoxShape.circle,
+            // Step 2: Choose Nearby Device (Scanning Live)
+            Container(
+              padding: const EdgeInsets.all(20),
+              decoration: BoxDecoration(
+                color: AppColors.cardDark,
+                borderRadius: BorderRadius.circular(18),
+                border: Border.all(color: AppColors.borderDark),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          Container(
+                            width: 28,
+                            height: 28,
+                            decoration: const BoxDecoration(
+                              shape: BoxShape.circle,
+                              gradient: AppColors.primaryGradient,
+                            ),
+                            alignment: Alignment.center,
+                            child: const Text('2', style: TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 13)),
+                          ),
+                          const SizedBox(width: 12),
+                          const Text(
+                            'Select Nearby Device (Auto-Scanning)',
+                            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16, color: Colors.white),
+                          ),
+                        ],
                       ),
-                      child: const Icon(Icons.cell_tower, color: AppColors.primary, size: 24),
-                    ),
-                    const SizedBox(width: 14),
-                    Expanded(
+                      OutlinedButton.icon(
+                        icon: const Icon(Icons.refresh, size: 16),
+                        label: const Text('Rescan'),
+                        onPressed: () => deviceProvider.refresh(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'Tap any detected device below to connect and transfer instantly.',
+                    style: TextStyle(fontSize: 12, color: AppColors.textSecondaryDark),
+                  ),
+                  const SizedBox(height: 16),
+
+                  if (devices.isEmpty)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(28),
+                      decoration: BoxDecoration(
+                        color: AppColors.surfaceDark,
+                        borderRadius: BorderRadius.circular(14),
+                        border: Border.all(color: AppColors.borderDark),
+                      ),
                       child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: const [
+                          Icon(Icons.radar, size: 36, color: AppColors.primary),
+                          SizedBox(height: 10),
                           Text(
-                            'Incoming Transfer Listener Active',
+                            'Scanning for nearby receivers on Wi-Fi...',
                             style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14, color: Colors.white),
                           ),
-                          SizedBox(height: 2),
+                          SizedBox(height: 4),
                           Text(
-                            'This device is listening on TCP port 52346. Any nearby AuraShare peer can send files with your authorization.',
+                            'Make sure AuraShare is open on the receiver device and on the same Wi-Fi or hotspot.',
+                            textAlign: TextAlign.center,
                             style: TextStyle(fontSize: 12, color: AppColors.textSecondaryDark),
                           ),
                         ],
                       ),
+                    )
+                  else
+                    ListView.separated(
+                      shrinkWrap: true,
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemCount: devices.length,
+                      separatorBuilder: (_, __) => const SizedBox(height: 10),
+                      itemBuilder: (context, index) {
+                        final dev = devices[index];
+                        return Container(
+                          decoration: BoxDecoration(
+                            color: AppColors.surfaceDark,
+                            borderRadius: BorderRadius.circular(14),
+                            border: Border.all(color: AppColors.borderDark),
+                          ),
+                          child: ListTile(
+                            leading: CircleAvatar(
+                              backgroundColor: AppColors.primary.withOpacity(0.15),
+                              child: Icon(
+                                dev.platform == DevicePlatform.android ? Icons.phone_android : Icons.laptop,
+                                color: AppColors.primary,
+                              ),
+                            ),
+                            title: Text(
+                              dev.name,
+                              style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 14),
+                            ),
+                            subtitle: Text(
+                              '${dev.platform.displayName} • ${dev.ipAddress}',
+                              style: const TextStyle(fontSize: 12, color: AppColors.textSecondaryDark),
+                            ),
+                            trailing: ElevatedButton.icon(
+                              icon: const Icon(Icons.send_rounded, size: 16),
+                              label: const Text('Send'),
+                              style: ElevatedButton.styleFrom(
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                              ),
+                              onPressed: () async {
+                                if (selectedFiles.isEmpty) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text('Please choose at least one file to send!'),
+                                      backgroundColor: AppColors.warning,
+                                    ),
+                                  );
+                                  await fileProvider.pickFiles();
+                                  return;
+                                }
+
+                                await transferProvider.startSend(
+                                  peerIp: dev.ipAddress,
+                                  peerPort: dev.port,
+                                  peerDeviceId: dev.id,
+                                  peerDeviceName: dev.name,
+                                  files: selectedFiles,
+                                );
+                              },
+                            ),
+                          ),
+                        );
+                      },
                     ),
-                  ],
-                ),
+                ],
               ),
-            ],
+            ),
           ],
         ),
       ),
