@@ -84,6 +84,12 @@ class AuraShareApp {
       this.addNotification('App Installed', 'AuraShare is installed on your device as a native app!', 'success');
     });
 
+    // Restore saved background if any
+    const savedBg = localStorage.getItem('aura_bg_theme');
+    if (savedBg && savedBg !== 'default') {
+      document.body.classList.add(savedBg);
+    }
+
     this.setupNavigation();
     this.setupBroadcastChannel();
     this.setupEventListeners();
@@ -1309,6 +1315,25 @@ class AuraShareApp {
   closePwaGuideModal() {
     const modal = document.getElementById('pwaInstallModal');
     if (modal) modal.classList.add('hidden');
+  }
+
+  cycleBackground() {
+    const backgrounds = ['default', 'bg-workspace', 'bg-glass-folders'];
+    const names = ['iStock File Sharing', 'Workspace Light-Blue Desk', 'iStock 3D Glass Folders'];
+
+    let currentIdx = 0;
+    if (document.body.classList.contains('bg-workspace')) currentIdx = 1;
+    else if (document.body.classList.contains('bg-glass-folders')) currentIdx = 2;
+
+    document.body.classList.remove('bg-workspace', 'bg-glass-folders');
+    const nextIdx = (currentIdx + 1) % backgrounds.length;
+
+    if (backgrounds[nextIdx] !== 'default') {
+      document.body.classList.add(backgrounds[nextIdx]);
+    }
+
+    localStorage.setItem('aura_bg_theme', backgrounds[nextIdx]);
+    this.addNotification('Wallpaper Changed', `Active background: ${names[nextIdx]}`, 'info');
   }
 }
 
