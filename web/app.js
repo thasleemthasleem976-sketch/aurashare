@@ -6,9 +6,9 @@ class AuraShareApp {
     this.transferPort = 52346;
     this.discoveryPort = 52345;
 
-    // Load or generate local node identity
-    this.nodeId = localStorage.getItem('aura_node_id') || 'node_' + Math.random().toString(36).substring(2, 9);
-    localStorage.setItem('aura_node_id', this.nodeId);
+    // Load or generate local node identity (isolated per tab / instance)
+    this.nodeId = sessionStorage.getItem('aura_node_id') || 'node_' + Math.random().toString(36).substring(2, 9);
+    sessionStorage.setItem('aura_node_id', this.nodeId);
 
     this.user = JSON.parse(localStorage.getItem('aura_user')) || {
       name: 'Alex Rivera',
@@ -521,14 +521,16 @@ class AuraShareApp {
       totalBytes: totalBytes
     });
 
-    this.addNotification('Transfer Request Sent', `Sending ${files.length} file(s) to ${targetDevice.name}...`, 'info');
+    this.addNotification('Transfer Request Sent', `Sending request for ${files.length} file(s) to ${targetDevice.name}. Waiting for authorization...`, 'info');
 
-    // Proceed with streaming transfer
-    setTimeout(() => {
-      if (this.activeTransfer && !this.transferTimer) {
-        this.startStreamingTransfer();
-      }
-    }, 1000);
+    // If sending to a direct custom IP node without peer channel, begin streaming
+    if (targetDevice.id.startsWith('dev_direct_')) {
+      setTimeout(() => {
+        if (this.activeTransfer && !this.transferTimer) {
+          this.startStreamingTransfer();
+        }
+      }, 1000);
+    }
   }
 
   // --- Unified Receive Screen Rendering ---
