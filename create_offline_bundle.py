@@ -71,6 +71,11 @@ FEATURES:
         ("web/app.js", "app.js"),
         ("web/manifest.json", "manifest.json"),
         ("web/sw.js", "sw.js"),
+        ("web/icon-192.png", "icon-192.png"),
+        ("web/icon-512.png", "icon-512.png"),
+        ("web/icon-maskable-512.png", "icon-maskable-512.png"),
+        ("web/favicon.png", "favicon.png"),
+        ("web/favicon.ico", "favicon.ico"),
         ("server.py", "server.py"),
     ]
 

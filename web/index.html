@@ -6,6 +6,13 @@
   <title>AuraShare – Secure Offline File Sharing</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00b4d8">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="AuraShare">
+  <link rel="apple-touch-icon" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="icon-192.png">
+  <link rel="icon" type="image/png" sizes="512x512" href="icon-512.png">
+  <link rel="shortcut icon" href="favicon.ico">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -209,6 +216,67 @@
     </div>
   </div>
 
+  <!-- PWA Install Guide Modal -->
+  <div id="pwaInstallModal" class="modal-backdrop hidden">
+    <div class="modal-card download-modal-card">
+      <div class="modal-header">
+        <div class="icon-bubble cyan"><i class="fa-solid fa-arrow-down-to-bracket"></i></div>
+        <div>
+          <h3>Install AuraShare App</h3>
+          <p>Run AuraShare as a standalone desktop or mobile application with offline support</p>
+        </div>
+      </div>
+      
+      <!-- Dynamic Banner depending on prompt state -->
+      <div id="pwaPromptReadyBox" class="pwa-prompt-box hidden" style="background: rgba(0, 180, 216, 0.12); border: 1px solid var(--primary); border-radius: 12px; padding: 16px; margin-bottom: 16px; display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+        <div>
+          <h4 style="color: #fff; margin-bottom: 4px;"><i class="fa-solid fa-circle-check text-cyan"></i> 1-Click Install Available</h4>
+          <p style="font-size: 13px; color: var(--text-muted); margin: 0;">Click below to add AuraShare directly to your desktop or device launcher.</p>
+        </div>
+        <button id="pwaDirectInstallBtn" class="btn btn-primary" onclick="app.executePwaPrompt()">
+          <i class="fa-solid fa-download"></i> Install Now
+        </button>
+      </div>
+
+      <div class="download-options-list">
+        <!-- Chrome / Edge / Brave Desktop Instructions -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-brands fa-chrome text-cyan"></i></div>
+          <div class="opt-text">
+            <h4>Google Chrome, Edge & Brave (Desktop)</h4>
+            <p>1. Look at the right end of your browser's address bar.</p>
+            <p>2. Click the <strong><i class="fa-solid fa-arrow-down-to-bracket"></i> Install AuraShare</strong> icon or <strong><i class="fa-solid fa-desktop"></i> App Available</strong> icon.</p>
+            <p>3. Or click browser menu (<strong>⋮</strong> or <strong>...</strong>) &rarr; <strong>Install AuraShare</strong> or <strong>Apps &rarr; Install this site as an app</strong>.</p>
+          </div>
+        </div>
+
+        <!-- Android Chrome Instructions -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-brands fa-android text-green"></i></div>
+          <div class="opt-text">
+            <h4>Android (Chrome / Samsung Internet)</h4>
+            <p>1. Tap the <strong>⋮</strong> (three dots) menu in top right.</p>
+            <p>2. Tap <strong>Install app</strong> or <strong>Add to Home screen</strong>.</p>
+            <p>3. AuraShare appears on your phone launcher like a native APK app!</p>
+          </div>
+        </div>
+
+        <!-- Localhost vs LAN Tip -->
+        <div class="download-opt-card" style="border-left: 3px solid var(--primary);">
+          <div class="opt-icon"><i class="fa-solid fa-circle-info text-blue"></i></div>
+          <div class="opt-text">
+            <h4>PWA Browser Security Note</h4>
+            <p style="margin-bottom: 0;">Browsers trigger automatic 1-click install popups on <code>http://localhost:8080</code> or over <code>HTTPS</code>. On local LAN IP addresses (e.g. <code>http://10.73.110.163:8080</code>), browsers require using the browser menu (<strong>⋮ &rarr; Install app</strong>) as shown above.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-actions" style="margin-top: 18px; display: flex; justify-content: flex-end; gap: 10px;">
+        <button class="btn btn-outline" onclick="app.closePwaGuideModal()">Close</button>
+      </div>
+    </div>
+  </div>
+
   <!-- App Shell -->
   <div id="appShell" class="app-shell hidden">
     <!-- Desktop Sidebar -->
@@ -314,6 +382,9 @@
           <span class="mobile-title">AuraShare</span>
         </div>
         <div class="topbar-actions">
+          <button id="topbarInstallPwaBtn" class="btn btn-outline-cyan btn-sm" onclick="app.triggerPwaInstall()" title="Install AuraShare as Desktop/Mobile PWA">
+            <i class="fa-solid fa-arrow-down-to-bracket"></i> Install App
+          </button>
           <button id="topbarDownloadBtn" class="btn btn-primary btn-sm" onclick="app.openDownloadModal()" title="Download Standalone Offline App">
             <i class="fa-solid fa-cloud-arrow-down"></i> Download Offline App
           </button>

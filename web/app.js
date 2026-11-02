@@ -62,13 +62,26 @@ class AuraShareApp {
   async init() {
     // Register Service Worker for 100% offline functionality
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('./sw.js').catch(err => console.log('SW registration note:', err));
+      navigator.serviceWorker.register('./sw.js')
+        .then(reg => {
+          console.log('AuraShare SW registered with scope:', reg.scope);
+        })
+        .catch(err => console.log('SW registration note:', err));
     }
 
     // Capture PWA install prompt
     window.addEventListener('beforeinstallprompt', (e) => {
       e.preventDefault();
       window.deferredPwaPrompt = e;
+      console.log('AuraShare beforeinstallprompt fired and captured.');
+      this.updatePwaInstallButtons(true);
+    });
+
+    window.addEventListener('appinstalled', () => {
+      console.log('AuraShare PWA installed successfully.');
+      window.deferredPwaPrompt = null;
+      this.updatePwaInstallButtons(false, true);
+      this.addNotification('App Installed', 'AuraShare is installed on your device as a native app!', 'success');
     });
 
     this.setupNavigation();
@@ -1204,25 +1217,92 @@ class AuraShareApp {
 
   copyLanUrl() {
     const url = `http://${this.localIp}:8080`;
-    navigator.clipboard.writeText(url).then(() => {
-      alert(`Copied: ${url}\nOpen this link on any phone, tablet, or PC on your local Wi-Fi or hotspot!`);
-    }).catch(() => {
-      prompt('Copy this link for your mobile device:', url);
-    });
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(url).then(() => {
+        this.addNotification('Link Copied', `Copied: ${url} — open on any phone or laptop on your Wi-Fi!`, 'success');
+      }).catch(() => {
+        this.addNotification('LAN URL', `Open ${url} on your phone or device.`, 'info');
+      });
+    } else {
+      this.addNotification('LAN URL', `Open ${url} on your phone or device.`, 'info');
+    }
+  }
+
+  updatePwaInstallButtons(canPrompt, isInstalled = false) {
+    const pwaBtn = document.getElementById('installPwaBtn');
+    const topbarBtn = document.getElementById('topbarInstallPwaBtn');
+    const readyBox = document.getElementById('pwaPromptReadyBox');
+
+    if (isInstalled) {
+      if (pwaBtn) {
+        pwaBtn.innerHTML = '<i class="fa-solid fa-circle-check text-green"></i> App Installed';
+        pwaBtn.classList.remove('btn-outline-cyan');
+        pwaBtn.classList.add('btn-outline');
+      }
+      if (topbarBtn) {
+        topbarBtn.innerHTML = '<i class="fa-solid fa-circle-check text-green"></i> Installed';
+        topbarBtn.classList.remove('btn-outline-cyan');
+        topbarBtn.classList.add('btn-outline');
+      }
+      if (readyBox) readyBox.classList.add('hidden');
+      return;
+    }
+
+    if (canPrompt) {
+      if (pwaBtn) pwaBtn.innerHTML = '<i class="fa-solid fa-download"></i> Install PWA App (Ready)';
+      if (topbarBtn) topbarBtn.innerHTML = '<i class="fa-solid fa-download"></i> Install App';
+      if (readyBox) readyBox.classList.remove('hidden');
+    } else {
+      if (readyBox) readyBox.classList.add('hidden');
+    }
   }
 
   triggerPwaInstall() {
     if (window.deferredPwaPrompt) {
-      window.deferredPwaPrompt.prompt();
-      window.deferredPwaPrompt.userChoice.then((choiceResult) => {
-        if (choiceResult.outcome === 'accepted') {
-          this.addNotification('App Installed', 'AuraShare installed to desktop app launcher.', 'success');
-        }
-        window.deferredPwaPrompt = null;
-      });
+      this.executePwaPrompt();
     } else {
-      alert('PWA Installation:\nClick the Install icon in your browser address bar (top-right of Chrome/Edge) or open the browser menu and select "Install AuraShare" to run as a native offline app.');
+      this.openPwaGuideModal();
     }
+  }
+
+  executePwaPrompt() {
+    if (!window.deferredPwaPrompt) {
+      this.openPwaGuideModal();
+      return;
+    }
+    const promptEvent = window.deferredPwaPrompt;
+    promptEvent.prompt();
+    promptEvent.userChoice.then((choiceResult) => {
+      if (choiceResult && choiceResult.outcome === 'accepted') {
+        this.addNotification('App Installed', 'AuraShare installed to desktop app launcher.', 'success');
+        this.updatePwaInstallButtons(false, true);
+        this.closePwaGuideModal();
+      }
+      window.deferredPwaPrompt = null;
+    }).catch(err => {
+      console.log('PWA prompt error:', err);
+      this.openPwaGuideModal();
+    });
+  }
+
+  openPwaGuideModal() {
+    const modal = document.getElementById('pwaInstallModal');
+    if (modal) {
+      const readyBox = document.getElementById('pwaPromptReadyBox');
+      if (readyBox) {
+        if (window.deferredPwaPrompt) {
+          readyBox.classList.remove('hidden');
+        } else {
+          readyBox.classList.add('hidden');
+        }
+      }
+      modal.classList.remove('hidden');
+    }
+  }
+
+  closePwaGuideModal() {
+    const modal = document.getElementById('pwaInstallModal');
+    if (modal) modal.classList.add('hidden');
   }
 }
 

@@ -1,10 +1,9 @@
 import http.server
-import socketserver
 import os
 import socket
+import sys
 
-PORT = 8080
-DIRECTORY = os.path.join(os.path.dirname(__file__), "web")
+DIRECTORY = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
 class Handler(http.server.SimpleHTTPRequestHandler):
     def __init__(self, *args, **kwargs):
@@ -27,27 +26,41 @@ def get_local_ip():
     except Exception:
         return "127.0.0.1"
 
-if __name__ == "__main__":
+def start_server():
     local_ip = get_local_ip()
-    # Try PORT 8080, fallback to 8081 if occupied
-    try:
-        server = socketserver.TCPServer(("0.0.0.0", PORT), Handler)
-    except OSError:
-        PORT = 8081
-        server = socketserver.TCPServer(("0.0.0.0", PORT), Handler)
+    server = None
+    chosen_port = 8080
+
+    for port in [8080, 8081, 8082, 8000, 8888]:
+        try:
+            http.server.ThreadingHTTPServer.allow_reuse_address = True
+            server = http.server.ThreadingHTTPServer(("", port), Handler)
+            chosen_port = port
+            break
+        except (OSError, PermissionError) as e:
+            print(f"Port {port} unavailable ({e}), trying next...")
+            continue
+
+    if not server:
+        print("Error: Could not bind to any suitable port.")
+        sys.exit(1)
 
     print("=" * 60)
     print(" AuraShare - Secure Offline File Sharing Local Web Server")
     print("=" * 60)
-    print(f" Localhost URL:   http://localhost:{PORT}")
-    print(f" Network LAN URL: http://{local_ip}:{PORT}")
+    print(f" Localhost URL:   http://localhost:{chosen_port}")
+    print(f" Network LAN URL: http://{local_ip}:{chosen_port}")
     print("=" * 60)
     print(f" Serving web app from: {DIRECTORY}")
     print(" Press Ctrl+C to terminate.")
     print("=" * 60)
+    sys.stdout.flush()
 
     try:
         server.serve_forever()
     except KeyboardInterrupt:
         print("\nStopping AuraShare server...")
         server.server_close()
+
+if __name__ == "__main__":
+    start_server()

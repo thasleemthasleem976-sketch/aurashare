@@ -1,11 +1,16 @@
 // AuraShare Offline Service Worker
-const CACHE_NAME = 'aurashare-v1';
+const CACHE_NAME = 'aurashare-v2';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
   './style.css',
   './app.js',
-  './manifest.json'
+  './manifest.json',
+  './icon-192.png',
+  './icon-512.png',
+  './icon-maskable-512.png',
+  './favicon.png',
+  './favicon.ico'
 ];
 
 self.addEventListener('install', (event) => {
