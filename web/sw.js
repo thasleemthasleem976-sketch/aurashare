@@ -1,5 +1,5 @@
 // AuraShare Offline Service Worker
-const CACHE_NAME = 'aurashare-v5';
+const CACHE_NAME = 'aurashare-v6';
 const ASSETS_TO_CACHE = [
   './',
   './index.html',
