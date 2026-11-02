@@ -327,32 +327,71 @@
             </div>
           </div>
 
-          <!-- Step 2: Choose Target Device (Auto-scanning nearby) -->
+          <!-- Step 2: Choose Target Device (High-Graphics Radar HUD) -->
           <div class="flow-card">
             <div class="flow-step-header">
               <div class="step-badge">2</div>
               <div>
-                <h3>Select Nearby Device to Send</h3>
-                <p>Scanning your Wi-Fi/Hotspot in real-time. Simply click any device to send!</p>
+                <h3>Nearby Devices Inside Scanning Area</h3>
+                <p>Real-time tactical radar scanning on UDP port 52345. Tap any peer inside the radar to transmit.</p>
               </div>
               <div style="margin-left: auto; display: flex; gap: 8px;">
                 <button id="sendDirectIpBtn" class="btn btn-outline-cyan btn-sm">
                   <i class="fa-solid fa-network-wired"></i> Direct IP
                 </button>
-                <button id="sendRefreshRadarBtn" class="btn btn-outline btn-sm" title="Rescan">
+                <button id="sendRefreshRadarBtn" class="btn btn-outline btn-sm" title="Rescan Radar">
                   <i class="fa-solid fa-arrows-rotate"></i>
                 </button>
               </div>
             </div>
 
-            <!-- Radar scanner bar -->
-            <div class="radar-scan-bar">
-              <div class="radar-pulse-dot"></div>
-              <span>Scanning local network on UDP port 52345...</span>
-            </div>
+            <!-- High Graphics Cybernetic Radar HUD -->
+            <div class="high-graphics-radar-container">
+              <div class="radar-hud-sphere" id="radarSphere">
+                <!-- Compass / Bearing Marks -->
+                <span class="hud-bearing north">N 000°</span>
+                <span class="hud-bearing east">E 090°</span>
+                <span class="hud-bearing south">S 180°</span>
+                <span class="hud-bearing west">W 270°</span>
 
-            <!-- Discovered Devices Grid -->
-            <div id="sendDevicesGrid" class="send-devices-grid"></div>
+                <!-- Concentric Range Grid Rings -->
+                <div class="hud-ring ring-100"><span class="range-tag">100m</span></div>
+                <div class="hud-ring ring-75"><span class="range-tag">75m</span></div>
+                <div class="hud-ring ring-50"><span class="range-tag">50m</span></div>
+                <div class="hud-ring ring-25"><span class="range-tag">25m</span></div>
+
+                <!-- Crosshairs -->
+                <div class="hud-crosshair-h"></div>
+                <div class="hud-crosshair-v"></div>
+
+                <!-- Rotating Radar Sweep Beam -->
+                <div class="hud-sweep-beam"></div>
+
+                <!-- Center Node (You / Host) -->
+                <div class="hud-center-node" title="Your Device (Host)">
+                  <div class="center-pulse-halo"></div>
+                  <i class="fa-solid fa-circle-dot"></i>
+                  <span class="center-label">You (Host)</span>
+                </div>
+
+                <!-- Floating Devices Layer (Plotted Directly Inside Radar) -->
+                <div id="radarDevicesLayer" class="radar-devices-layer"></div>
+
+                <!-- Empty State HUD Readout -->
+                <div id="radarEmptyHud" class="radar-empty-hud">
+                  <div class="hud-scanner-text">
+                    <span class="radar-blink-dot"></span>
+                    <span>SCANNING LOCAL FREQUENCIES (PORT 52345)</span>
+                  </div>
+                  <p>No other devices detected on this network yet.<br>Open this link in another tab or phone to connect:</p>
+                  <div class="radar-quick-actions">
+                    <button class="btn-sm btn-outline-cyan" onclick="window.open(window.location.href, '_blank')">
+                      <i class="fa-solid fa-arrow-up-right-from-square"></i> Open 2nd Tab to Test
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
         </section>
 

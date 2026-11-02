@@ -64,20 +64,6 @@ class AuraShareApp {
       }
     }, 2500);
 
-    // Initial discoverable device if running single instance for realistic offline demonstration
-    setTimeout(() => {
-      if (this.devices.size === 0) {
-        this.addDevice({
-          id: 'dev_vishnu_phone',
-          name: "Vishnu's Phone",
-          platform: 'Android',
-          ip: '10.73.110.182',
-          port: 52346,
-          lastSeen: Date.now()
-        });
-      }
-    }, 1000);
-
     // Initial welcome notification
     if (this.notifications.length === 0) {
       this.addNotification('AuraShare Ready', 'Bound to ' + this.localIp + ':52346. Zero cloud traffic.', 'info');
@@ -131,7 +117,7 @@ class AuraShareApp {
     const now = Date.now();
     let updated = false;
     for (const [id, dev] of this.devices.entries()) {
-      if (now - dev.lastSeen > 15000 && id !== 'dev_vishnu_phone') {
+      if (now - dev.lastSeen > 8000) {
         this.devices.delete(id);
         updated = true;
       }
@@ -412,37 +398,81 @@ class AuraShareApp {
   }
 
   renderSendDevicesGrid() {
+    const radarLayer = document.getElementById('radarDevicesLayer');
+    const emptyHud = document.getElementById('radarEmptyHud');
     const grid = document.getElementById('sendDevicesGrid');
 
-    if (this.devices.size === 0) {
-      grid.innerHTML = `
-        <div style="grid-column: 1 / -1; text-align:center; padding:32px; background:var(--surface-dark); border-radius:14px; border:1px solid var(--border-dark);">
-          <i class="fa-solid fa-satellite-dish" style="font-size:28px; color:var(--text-muted); opacity:0.5; margin-bottom:10px;"></i>
-          <h4 style="font-size:14px;">Searching for Nearby Receivers...</h4>
-          <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Open AuraShare on another device and click "Receive Files" to make it visible.</p>
-        </div>`;
-      return;
+    if (radarLayer) {
+      if (this.devices.size === 0) {
+        radarLayer.innerHTML = '';
+        if (emptyHud) emptyHud.style.display = 'block';
+      } else {
+        if (emptyHud) emptyHud.style.display = 'none';
+
+        const deviceList = Array.from(this.devices.values());
+        const total = deviceList.length;
+        let html = '';
+
+        // Polar radius from host center in % (32% to 35% keeps inside radar rings)
+        const radiusPercent = total === 1 ? 32 : 35;
+
+        deviceList.forEach((dev, idx) => {
+          // Angle in radians distributed around the dome starting at top
+          const angle = (2 * Math.PI * idx) / total - Math.PI / 2;
+          const leftPercent = 50 + radiusPercent * Math.cos(angle);
+          const topPercent = 50 + radiusPercent * Math.sin(angle);
+          const isAndroid = (dev.platform || '').toLowerCase().includes('android') || (dev.name || '').toLowerCase().includes('phone');
+          const isTrusted = this.trustedIds.includes(dev.id);
+
+          html += `
+            <div class="radar-floating-device" 
+                 style="left: ${leftPercent.toFixed(1)}%; top: ${topPercent.toFixed(1)}%;"
+                 onclick="app.onDeviceCardClicked('${dev.id}')"
+                 title="Tap to transmit files to ${dev.name}">
+              <div class="device-avatar-bubble">
+                <div class="device-sonar-wave"></div>
+                <i class="fa-solid ${isAndroid ? 'fa-mobile-screen' : 'fa-laptop'}"></i>
+              </div>
+              <div class="device-hud-pill">
+                <strong>${dev.name} ${isTrusted ? '<i class="fa-solid fa-circle-check text-cyan" style="font-size:10px;"></i>' : ''}</strong>
+                <span class="device-send-hint"><i class="fa-solid fa-paper-plane"></i> SEND</span>
+              </div>
+            </div>`;
+        });
+
+        radarLayer.innerHTML = html;
+      }
     }
 
-    let html = '';
-    for (const [id, dev] of this.devices.entries()) {
-      const isTrusted = this.trustedIds.includes(id);
-
-      html += `
-        <div class="send-device-card" onclick="app.onDeviceCardClicked('${id}')">
-          <div class="send-device-icon">
-            <i class="fa-solid ${dev.platform.includes('Android') ? 'fa-mobile-screen' : 'fa-laptop'}"></i>
-          </div>
-          <div class="send-device-meta">
-            <strong>${dev.name} ${isTrusted ? '<i class="fa-solid fa-circle-check text-cyan" style="font-size:12px;"></i>' : ''}</strong>
-            <span>${dev.platform} • ${dev.ip}</span>
-          </div>
-          <button class="send-tap-btn">
-            <i class="fa-solid fa-paper-plane"></i> Send
-          </button>
-        </div>`;
+    if (grid) {
+      if (this.devices.size === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align:center; padding:32px; background:var(--surface-dark); border-radius:14px; border:1px solid var(--border-dark);">
+            <i class="fa-solid fa-satellite-dish" style="font-size:28px; color:var(--text-muted); opacity:0.5; margin-bottom:10px;"></i>
+            <h4 style="font-size:14px;">Searching for Nearby Receivers...</h4>
+            <p style="font-size:12px; color:var(--text-muted); margin-top:4px;">Open AuraShare on another device or tab to detect live peers.</p>
+          </div>`;
+      } else {
+        let html = '';
+        for (const [id, dev] of this.devices.entries()) {
+          const isTrusted = this.trustedIds.includes(id);
+          html += `
+            <div class="send-device-card" onclick="app.onDeviceCardClicked('${id}')">
+              <div class="send-device-icon">
+                <i class="fa-solid ${(dev.platform || '').includes('Android') ? 'fa-mobile-screen' : 'fa-laptop'}"></i>
+              </div>
+              <div class="send-device-meta">
+                <strong>${dev.name} ${isTrusted ? '<i class="fa-solid fa-circle-check text-cyan" style="font-size:12px;"></i>' : ''}</strong>
+                <span>${dev.platform} • ${dev.ip}</span>
+              </div>
+              <button class="send-tap-btn">
+                <i class="fa-solid fa-paper-plane"></i> Send
+              </button>
+            </div>`;
+        }
+        grid.innerHTML = html;
+      }
     }
-    grid.innerHTML = html;
   }
 
   onDeviceCardClicked(id) {
