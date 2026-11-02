@@ -6,9 +6,6 @@
   <title>AuraShare – Secure Offline File Sharing</title>
   <link rel="manifest" href="manifest.json">
   <meta name="theme-color" content="#00b4d8">
-  <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <link rel="icon" type="image/png" href="icon-192.png">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
@@ -16,91 +13,77 @@
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="dark-theme">
-  <!-- Authentication Overlay (Local Login & Registration) -->
-  <div id="authModalOverlay" class="modal-backdrop hidden">
+  <!-- 0. Local Authentication Screen (Login & Account Creation) -->
+  <div id="authScreen" class="auth-screen">
     <div class="auth-card">
-      <div class="auth-header">
-        <div class="brand-logo-large"><i class="fa-solid fa-share-nodes"></i></div>
+      <div class="auth-brand">
+        <div class="brand-logo-large">
+          <i class="fa-solid fa-share-nodes"></i>
+        </div>
         <h2>AuraShare</h2>
-        <p>Secure Offline File Sharing • 100% Local Authentication</p>
+        <span class="auth-badge"><i class="fa-solid fa-shield-halved"></i> SECURE LOCAL AUTHENTICATION</span>
+        <p>Offline peer-to-peer file transfer. No external server or cloud connection required.</p>
       </div>
 
-      <!-- Auth Tabs -->
+      <!-- Auth Tabs: Sign In / Create Account -->
       <div class="auth-tabs">
-        <button id="authTabLogin" class="auth-tab-btn active" onclick="app.switchAuthTab('login')">
+        <button id="tabBtnLogin" class="auth-tab-btn active" onclick="app.switchAuthTab('login')">
           <i class="fa-solid fa-right-to-bracket"></i> Sign In
         </button>
-        <button id="authTabRegister" class="auth-tab-btn" onclick="app.switchAuthTab('register')">
+        <button id="tabBtnRegister" class="auth-tab-btn" onclick="app.switchAuthTab('register')">
           <i class="fa-solid fa-user-plus"></i> Create Account
         </button>
       </div>
 
-      <div id="authAlertBox" class="form-status-msg hidden"></div>
-
-      <!-- 1. Login Form -->
-      <form id="loginForm" class="auth-form" onsubmit="event.preventDefault(); app.handleLogin();">
+      <!-- Sign In Form -->
+      <form id="loginForm" class="auth-form" onsubmit="app.handleLoginForm(event)">
         <div class="form-group">
           <label><i class="fa-solid fa-envelope"></i> Email Address</label>
-          <input type="email" id="loginEmail" class="input-field" placeholder="your.name@local.net" required autocomplete="username">
+          <input type="email" id="loginEmail" class="input-field" placeholder="Enter your email" required autocomplete="email">
         </div>
         <div class="form-group">
           <label><i class="fa-solid fa-lock"></i> Password</label>
-          <div class="password-wrapper">
-            <input type="password" id="loginPassword" class="input-field" placeholder="Enter your password" required autocomplete="current-password">
-            <button type="button" class="btn-eye" onclick="app.togglePasswordVisibility('loginPassword', this)"><i class="fa-regular fa-eye"></i></button>
-          </div>
+          <input type="password" id="loginPassword" class="input-field" placeholder="Enter your password" required autocomplete="current-password">
         </div>
-        <button type="submit" id="loginSubmitBtn" class="btn btn-primary btn-block">
-          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In
+        <div id="loginError" class="auth-error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to AuraShare
         </button>
-        <div class="auth-switch-hint">
-          <span>New to AuraShare?</span>
-          <button type="button" class="btn-link" onclick="app.switchAuthTab('register')">Create an Account</button>
+        <div class="auth-switch-link">
+          Don't have an account yet? <a href="javascript:void(0)" onclick="app.switchAuthTab('register')">Create an Account</a>
         </div>
       </form>
 
-      <!-- 2. Registration Form -->
-      <form id="registerForm" class="auth-form hidden" onsubmit="event.preventDefault(); app.handleRegister();">
+      <!-- Create Account Form -->
+      <form id="registerForm" class="auth-form hidden" onsubmit="app.handleRegisterForm(event)">
         <div class="form-group">
           <label><i class="fa-solid fa-user"></i> Full Name</label>
-          <input type="text" id="regFullName" class="input-field" placeholder="e.g. Alex Rivera" required>
+          <input type="text" id="regFullName" class="input-field" placeholder="e.g. Alex Rivera" required autocomplete="name">
         </div>
         <div class="form-group">
           <label><i class="fa-solid fa-envelope"></i> Email Address</label>
-          <input type="email" id="regEmail" class="input-field" placeholder="e.g. alex@aurashare.local" required autocomplete="username">
+          <input type="email" id="regEmail" class="input-field" placeholder="e.g. alex@company.local" required autocomplete="email">
         </div>
         <div class="form-group">
-          <label><i class="fa-solid fa-laptop"></i> Device Name</label>
-          <input type="text" id="regDeviceName" class="input-field" placeholder="e.g. Alex's Laptop">
+          <label><i class="fa-solid fa-lock"></i> Password</label>
+          <input type="password" id="regPassword" class="input-field" placeholder="Minimum 6 characters" required minlength="6" autocomplete="new-password">
         </div>
-        <div class="form-row">
-          <div class="form-group">
-            <label><i class="fa-solid fa-lock"></i> Password</label>
-            <div class="password-wrapper">
-              <input type="password" id="regPassword" class="input-field" placeholder="Min 6 chars" required autocomplete="new-password">
-              <button type="button" class="btn-eye" onclick="app.togglePasswordVisibility('regPassword', this)"><i class="fa-regular fa-eye"></i></button>
-            </div>
-          </div>
-          <div class="form-group">
-            <label><i class="fa-solid fa-shield-check"></i> Confirm</label>
-            <div class="password-wrapper">
-              <input type="password" id="regConfirmPassword" class="input-field" placeholder="Re-type password" required autocomplete="new-password">
-              <button type="button" class="btn-eye" onclick="app.togglePasswordVisibility('regConfirmPassword', this)"><i class="fa-regular fa-eye"></i></button>
-            </div>
-          </div>
+        <div class="form-group">
+          <label><i class="fa-solid fa-shield-check"></i> Confirm Password</label>
+          <input type="password" id="regConfirmPassword" class="input-field" placeholder="Re-enter password" required minlength="6" autocomplete="new-password">
         </div>
-        <button type="submit" id="regSubmitBtn" class="btn btn-primary btn-block">
-          <i class="fa-solid fa-user-plus"></i> Create Account & Sign In
+        <div id="registerError" class="auth-error-msg hidden"></div>
+        <button type="submit" class="btn btn-primary btn-block">
+          <i class="fa-solid fa-user-plus"></i> Create Account & Enter
         </button>
-        <div class="auth-switch-hint">
-          <span>Already registered?</span>
-          <button type="button" class="btn-link" onclick="app.switchAuthTab('login')">Sign In</button>
+        <div class="auth-switch-link">
+          Already registered? <a href="javascript:void(0)" onclick="app.switchAuthTab('login')">Sign In</a>
         </div>
       </form>
 
-      <div class="auth-offline-badge">
-        <i class="fa-solid fa-shield-halved text-cyan"></i>
-        <span>100% Offline Vault • No Cloud Authentication Server</span>
+      <div class="auth-vault-note">
+        <i class="fa-solid fa-database"></i>
+        <span>Local Offline Vault: All user profiles and credentials are stored strictly on your local device.</span>
       </div>
     </div>
   </div>
@@ -137,36 +120,97 @@
     </div>
   </div>
 
-  <!-- Direct IP Modal with Active Resource Probing -->
+  <!-- Direct IP Modal (With Live Resource Verification) -->
   <div id="directIpModal" class="modal-backdrop hidden">
     <div class="modal-card">
       <div class="modal-header">
         <div class="icon-bubble cyan"><i class="fa-solid fa-network-wired"></i></div>
         <div>
           <h3>Direct IP Connection</h3>
-          <p>Send to an active peer IP on your local Wi-Fi or Hotspot</p>
+          <p>Send directly to an active verified IP on your local Wi-Fi or Hotspot</p>
         </div>
       </div>
       <div class="form-group">
         <label>Target IPv4 Address</label>
-        <input type="text" id="directIpInput" placeholder="e.g. 10.73.110.163" class="input-field">
+        <input type="text" id="directIpInput" placeholder="e.g. 10.73.110.182" class="input-field" autocomplete="off">
+        <span class="input-hint">Must be an active device on your local subnet (random inputs rejected)</span>
       </div>
       <div class="form-group">
         <label>Port</label>
         <input type="number" id="directPortInput" value="52346" class="input-field">
       </div>
-      <div id="directIpStatus" class="form-status-msg hidden"></div>
+      <div id="directIpStatus" class="direct-ip-status hidden"></div>
+      <div id="directIpError" class="auth-error-msg hidden"></div>
       <div class="modal-actions">
         <button id="cancelDirectIpBtn" class="btn btn-outline">Cancel</button>
-        <button id="connectDirectIpBtn" class="btn btn-primary">
-          <i class="fa-solid fa-satellite-dish"></i> Probe & Connect
-        </button>
+        <button id="connectDirectIpBtn" class="btn btn-primary"><i class="fa-solid fa-bolt"></i> Probe & Send</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Download Offline App Modal -->
+  <div id="downloadAppModal" class="modal-backdrop hidden">
+    <div class="modal-card download-modal-card">
+      <div class="modal-header">
+        <div class="icon-bubble cyan"><i class="fa-solid fa-cloud-arrow-down"></i></div>
+        <div>
+          <h3>Download AuraShare Offline App</h3>
+          <p>Run completely offline on any device with 100% functionality and zero cloud dependencies</p>
+        </div>
+      </div>
+      <div class="download-options-list">
+        <!-- Standalone Bundle Option -->
+        <div class="download-opt-card featured">
+          <div class="opt-icon"><i class="fa-solid fa-box-archive text-cyan"></i></div>
+          <div class="opt-text">
+            <div class="opt-title-row">
+              <h4>Standalone Offline Package (.ZIP)</h4>
+              <span class="badge success">Recommended</span>
+            </div>
+            <p>Complete offline distribution. Includes 1-click Windows launcher (<code>start_windows.bat</code>), Mac/Linux launcher (<code>start_linux_mac.sh</code>), and offline server. Zero installation needed.</p>
+            <div class="opt-actions">
+              <a href="./aurashare-offline.zip" download="AuraShare-Offline.zip" class="btn btn-primary btn-sm">
+                <i class="fa-solid fa-download"></i> Download Standalone ZIP (25 KB)
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Progressive Web App Option -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-solid fa-laptop text-blue"></i></div>
+          <div class="opt-text">
+            <h4>Install as Desktop App (PWA)</h4>
+            <p>Installs AuraShare directly to your desktop or start menu via browser. Full offline cache & native window.</p>
+            <div class="opt-actions">
+              <button id="installPwaBtn" class="btn btn-outline-cyan btn-sm" onclick="app.triggerPwaInstall()">
+                <i class="fa-solid fa-arrow-down-to-bracket"></i> Install PWA App
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mobile / Android Direct Option -->
+        <div class="download-opt-card">
+          <div class="opt-icon"><i class="fa-solid fa-mobile-screen text-green"></i></div>
+          <div class="opt-text">
+            <h4>Android / Mobile Direct Connection</h4>
+            <p>Connect phone to the same Wi-Fi or turn on Portable Hotspot, and open this URL in your mobile browser:</p>
+            <div class="mobile-lan-pill">
+              <code id="modalLanIp">http://10.73.110.163:8080</code>
+              <button class="btn-copy-sm" onclick="app.copyLanUrl()"><i class="fa-regular fa-copy"></i> Copy</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-actions" style="margin-top: 18px;">
+        <button id="closeDownloadModalBtn" class="btn btn-outline" onclick="app.closeDownloadModal()">Close</button>
       </div>
     </div>
   </div>
 
   <!-- App Shell -->
-  <div id="appShell" class="app-shell">
+  <div id="appShell" class="app-shell hidden">
     <!-- Desktop Sidebar -->
     <aside class="sidebar">
       <div class="brand">
@@ -209,6 +253,11 @@
           <i class="fa-solid fa-clock-rotate-left"></i>
           <span>Transfer History</span>
         </a>
+        <a href="javascript:void(0)" class="nav-item download-nav-highlight" onclick="app.openDownloadModal()">
+          <i class="fa-solid fa-cloud-arrow-down text-cyan"></i>
+          <span>Download App</span>
+          <span class="nav-badge info">OFFLINE</span>
+        </a>
 
         <div class="nav-section-label">SECURITY & PREFERENCES</div>
         <a href="#security" class="nav-item" data-screen="security">
@@ -240,13 +289,6 @@
           <i class="fa-solid fa-code"></i>
           <span>Developer Info</span>
         </a>
-
-        <div class="nav-section-label">STANDALONE APP</div>
-        <a href="#download-app" class="nav-item" data-screen="download-app">
-          <i class="fa-solid fa-circle-arrow-down text-cyan"></i>
-          <span>Download App</span>
-          <span class="nav-badge success">OFFLINE</span>
-        </a>
       </nav>
 
       <!-- User footer -->
@@ -272,8 +314,8 @@
           <span class="mobile-title">AuraShare</span>
         </div>
         <div class="topbar-actions">
-          <button id="topbarInstallAppBtn" class="btn btn-outline-cyan btn-sm" onclick="app.navigate('download-app')" title="Get Offline App">
-            <i class="fa-solid fa-download"></i> Get App
+          <button id="topbarDownloadBtn" class="btn btn-primary btn-sm" onclick="app.openDownloadModal()" title="Download Standalone Offline App">
+            <i class="fa-solid fa-cloud-arrow-down"></i> Download Offline App
           </button>
           <div class="status-pill online">
             <span class="status-dot"></span>
@@ -346,6 +388,16 @@
               </div>
               <i class="fa-solid fa-chevron-right action-arrow"></i>
             </div>
+          </div>
+
+          <!-- Standalone Offline App Download Banner -->
+          <div class="download-banner-card" onclick="app.openDownloadModal()">
+            <div class="download-banner-icon"><i class="fa-solid fa-laptop-code"></i></div>
+            <div class="download-banner-text">
+              <h4>Get AuraShare Standalone Offline App</h4>
+              <p>Download the zero-install bundle with 1-click launcher for Windows, Mac & Linux. Works 100% offline anywhere without internet.</p>
+            </div>
+            <button class="btn btn-primary btn-sm"><i class="fa-solid fa-download"></i> Download App</button>
           </div>
 
           <!-- Stats Grid -->
@@ -804,76 +856,6 @@
   "ip": "10.73.110.163",
   "port": 52346
 }</pre>
-        </section>
-
-        <!-- 11. Download App Screen (Offline Executable & PWA) -->
-        <section id="screen-download-app" class="app-screen">
-          <div class="screen-header">
-            <h2>Download & Install AuraShare App</h2>
-            <p>100% offline standalone application. Zero internet or external server required.</p>
-          </div>
-
-          <div class="download-cards-grid">
-            <!-- 1. Windows Offline App Package -->
-            <div class="download-card highlight">
-              <div class="download-card-badge">RECOMMENDED FOR DESKTOP</div>
-              <div class="download-icon-circle blue">
-                <i class="fa-brands fa-windows"></i>
-              </div>
-              <h3>Windows Desktop Offline App</h3>
-              <p>Self-contained offline application with native socket engine, automatic LAN discovery, and one-click desktop launcher.</p>
-              <ul class="download-feature-list">
-                <li><i class="fa-solid fa-check text-cyan"></i> 100% Offline with zero internet required</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Native socket engine on TCP 52346 & UDP 52345</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Pre-bundled <code>Run-AuraShare.bat</code> 1-click launcher</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Complete offline web assets included</li>
-              </ul>
-              <a href="/downloads/AuraShare-Offline-App.zip" download="AuraShare-Offline-App.zip" class="btn btn-primary btn-block">
-                <i class="fa-solid fa-download"></i> Download Windows App (.zip)
-              </a>
-              <span class="download-meta-hint">Version 1.0 • Standalone Offline Package • 47 KB</span>
-            </div>
-
-            <!-- 2. Progressive Web App (PWA) -->
-            <div class="download-card">
-              <div class="download-card-badge">CROSS-PLATFORM</div>
-              <div class="download-icon-circle cyan">
-                <i class="fa-solid fa-mobile-screen-button"></i>
-              </div>
-              <h3>Install Standalone App (PWA)</h3>
-              <p>Installs directly onto your Windows 11/10 desktop, Android home screen, macOS, or Chromebook with full offline caching.</p>
-              <ul class="download-feature-list">
-                <li><i class="fa-solid fa-check text-cyan"></i> Dedicated windowed app with zero address bar</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Offline Service Worker caches all assets</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Runs from Start Menu or Android Home Screen</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Instant 1-tap installation</li>
-              </ul>
-              <button id="pwaInstallScreenBtn" class="btn btn-outline-cyan btn-block" onclick="app.triggerPwaInstall()">
-                <i class="fa-solid fa-arrow-down-to-bracket"></i> Install on This Device
-              </button>
-              <span class="download-meta-hint">Requires Chrome, Edge, or Android Browser</span>
-            </div>
-
-            <!-- 3. Mobile / Android Hotspot Sharing -->
-            <div class="download-card">
-              <div class="download-card-badge">MOBILE & HOTSPOT</div>
-              <div class="download-icon-circle green">
-                <i class="fa-brands fa-android"></i>
-              </div>
-              <h3>Android & Mobile Access</h3>
-              <p>Use AuraShare on any phone or tablet via local Wi-Fi Hotspot with no app store download required.</p>
-              <ul class="download-feature-list">
-                <li><i class="fa-solid fa-check text-cyan"></i> Turn on Phone Portable Hotspot</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Connect your laptop to your phone</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Open <strong id="downloadLanUrlHint">http://10.73.110.163:8080</strong> on phone</li>
-                <li><i class="fa-solid fa-check text-cyan"></i> Tap "Add to Home Screen" to install</li>
-              </ul>
-              <button class="btn btn-outline btn-block" onclick="window.open(window.location.href, '_blank')">
-                <i class="fa-solid fa-qrcode"></i> View Network Connection
-              </button>
-              <span class="download-meta-hint">Zero mobile data usage</span>
-            </div>
-          </div>
         </section>
       </div>
 

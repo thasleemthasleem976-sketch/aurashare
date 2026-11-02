@@ -10,6 +10,8 @@
 .svn/
 migrate_working_dir/
 .tmp_chrome_e2e/
+.tmp_chrome_features/
+AuraShare-Windows.spec
 __pycache__/
 
 # IntelliJ related

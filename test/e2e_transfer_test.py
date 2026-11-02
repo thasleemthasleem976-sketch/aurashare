@@ -85,19 +85,27 @@ async def run_e2e_test():
             r_id = await cdp_eval(ws_receiver, "app.nodeId")
             print(f"[INIT] Sender nodeId: {s_id} | Receiver nodeId: {r_id}")
 
-            # Configure Sender Identity
+            # Authenticate and Configure Sender Identity
             await cdp_eval(ws_sender, """
-                app.settings.deviceName = "Sender-Laptop (Windows)";
+                app.currentUser = { fullName: "Sender Alice", email: "alice@local", deviceName: "Sender-Laptop (Windows)" };
+                app.user.name = app.currentUser.fullName;
+                app.settings.deviceName = app.currentUser.deviceName;
                 app.user.deviceName = app.settings.deviceName;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appShell').classList.remove('hidden');
                 document.getElementById('settingDeviceName').value = app.settings.deviceName;
                 document.getElementById('sidebarDeviceName').innerText = app.settings.deviceName;
                 app.navigate('send');
             """)
 
-            # Configure Receiver Identity
+            # Authenticate and Configure Receiver Identity
             await cdp_eval(ws_receiver, """
-                app.settings.deviceName = "Receiver-Phone (Android)";
+                app.currentUser = { fullName: "Receiver Bob", email: "bob@local", deviceName: "Receiver-Phone (Android)" };
+                app.user.name = app.currentUser.fullName;
+                app.settings.deviceName = app.currentUser.deviceName;
                 app.user.deviceName = app.settings.deviceName;
+                document.getElementById('authScreen').classList.add('hidden');
+                document.getElementById('appShell').classList.remove('hidden');
                 document.getElementById('settingDeviceName').value = app.settings.deviceName;
                 document.getElementById('sidebarDeviceName').innerText = app.settings.deviceName;
                 app.navigate('receive');
