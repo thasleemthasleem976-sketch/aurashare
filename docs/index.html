@@ -56,6 +56,9 @@
         <button type="submit" class="btn btn-primary btn-block">
           <i class="fa-solid fa-arrow-right-to-bracket"></i> Sign In to AuraShare
         </button>
+        <button type="button" class="btn btn-outline-cyan btn-block" style="margin-top: 10px;" onclick="app.quickDemoLogin()">
+          <i class="fa-solid fa-bolt"></i> Instant Demo Sign-In (1-Click)
+        </button>
         <div class="auth-switch-link">
           Don't have an account yet? <a href="javascript:void(0)" onclick="app.switchAuthTab('register')">Create an Account</a>
         </div>
@@ -565,12 +568,15 @@
                 <h3>Nearby Devices Inside Scanning Area</h3>
                 <p>Real-time tactical radar scanning on UDP port 52345. Tap any peer inside the radar to transmit.</p>
               </div>
-              <div style="margin-left: auto; display: flex; gap: 8px;">
-                <button id="sendDirectIpBtn" class="btn btn-outline-cyan btn-sm">
+              <div style="margin-left: auto; display: flex; gap: 8px; flex-wrap: wrap;">
+                <button id="radarSimulateBtn" class="btn btn-outline-cyan btn-sm" title="Simulate Active Nearby Device in Radar">
+                  <i class="fa-solid fa-satellite-dish"></i> + Demo Peer
+                </button>
+                <button id="sendDirectIpBtn" class="btn btn-outline-cyan btn-sm" title="Connect to Device via Direct IP">
                   <i class="fa-solid fa-network-wired"></i> Direct IP
                 </button>
-                <button id="sendRefreshRadarBtn" class="btn btn-outline btn-sm" title="Rescan Radar">
-                  <i class="fa-solid fa-arrows-rotate"></i>
+                <button id="sendRefreshRadarBtn" class="btn btn-outline btn-sm" title="Rescan Local Subnet">
+                  <i class="fa-solid fa-arrows-rotate"></i> Rescan
                 </button>
               </div>
             </div>

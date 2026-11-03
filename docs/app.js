@@ -153,6 +153,9 @@ class AuraShareApp {
   }
 
   addDevice(dev) {
+    if (dev.id !== this.nodeId && dev.name === this.settings.deviceName) {
+      dev.name = this.settings.deviceName + ' (Peer Tab)';
+    }
     this.devices.set(dev.id, dev);
     this.renderSendDevicesGrid();
     this.renderStats();
@@ -355,6 +358,21 @@ class AuraShareApp {
     const logoutBtn = document.getElementById('logoutBtn');
     if (logoutBtn) {
       logoutBtn.onclick = () => this.logout();
+    }
+
+        // Radar Simulation & Scanner controls
+    const simBtn = document.getElementById('radarSimulateBtn');
+    if (simBtn) {
+      simBtn.onclick = () => {
+        const demoDevices = [
+          { id: 'demo_galaxy_' + Math.floor(Math.random() * 1000), name: "Galaxy S24 Ultra", platform: "Android 14", ip: "192.168.1.105", port: 52346, lastSeen: Date.now() },
+          { id: 'demo_macbook_' + Math.floor(Math.random() * 1000), name: "MacBook Pro M3", platform: "macOS", ip: "192.168.1.142", port: 52346, lastSeen: Date.now() },
+          { id: 'demo_pixel_' + Math.floor(Math.random() * 1000), name: "Pixel 9 Pro", platform: "Android 15", ip: "192.168.1.168", port: 52346, lastSeen: Date.now() }
+        ];
+        const picked = demoDevices[Math.floor(Math.random() * demoDevices.length)];
+        this.addDevice(picked);
+        this.addNotification('Radar Detection', `Detected ${picked.name} (${picked.ip}) inside scanning area`, 'success');
+      };
     }
 
     document.getElementById('sendRefreshRadarBtn').onclick = () => {
@@ -1032,6 +1050,41 @@ class AuraShareApp {
   }
 
   // --- Local Offline Authentication ---
+
+  
+  quickDemoLogin() {
+    const demoUser = {
+      fullName: 'Alex Rivera',
+      email: 'alex@aurashare.local',
+      password: 'password123',
+      deviceName: "Alex's Laptop"
+    };
+    const accounts = JSON.parse(localStorage.getItem('aura_accounts')) || [];
+    if (!accounts.some(a => a.email === demoUser.email)) {
+      accounts.push(demoUser);
+      localStorage.setItem('aura_accounts', JSON.stringify(accounts));
+    }
+    this.currentUser = demoUser;
+    localStorage.setItem('aura_active_user', JSON.stringify(demoUser));
+    sessionStorage.setItem('aura_active_user', JSON.stringify(demoUser));
+    this.user.name = demoUser.fullName;
+    this.user.email = demoUser.email;
+    this.user.deviceName = demoUser.deviceName;
+    this.user.avatar = 'A';
+    this.settings.deviceName = demoUser.deviceName;
+
+    const authScreen = document.getElementById('authScreen');
+    const appShell = document.getElementById('appShell');
+    if (authScreen) authScreen.classList.add('hidden');
+    if (appShell) appShell.classList.remove('hidden');
+
+    this.renderUserProfile();
+    this.renderStats();
+    this.renderHistory();
+    this.renderNotifications();
+    this.broadcastBeacon();
+    this.addNotification('Demo Sign-In Active', 'Logged in as ' + demoUser.fullName + '. Ready for high-speed offline file transfer.', 'success');
+  }
 
   checkAuthSession() {
     const authScreen = document.getElementById('authScreen');

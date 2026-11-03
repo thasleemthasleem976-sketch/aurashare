@@ -71,6 +71,7 @@ FEATURES:
         ("web/app.js", "app.js"),
         ("web/manifest.json", "manifest.json"),
         ("web/sw.js", "sw.js"),
+        ("web/site-bg.jpg", "site-bg.jpg"),
         ("web/file-sharing-bg.jpg", "file-sharing-bg.jpg"),
         ("web/workspace-bg.png", "workspace-bg.png"),
         ("web/glass-folders-bg.jpg", "glass-folders-bg.jpg"),

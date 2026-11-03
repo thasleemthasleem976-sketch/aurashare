@@ -2,6 +2,8 @@
 downloads/
 web/downloads/
 docs/downloads/
+.tmp_chrome_shot/
+test/screenshots/
 *.class
 *.log
 *.pyc

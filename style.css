@@ -82,7 +82,7 @@ body, body.dark-theme, body.liquid-glass-theme, body.bg-workspace, body.bg-glass
   background-color: #0b1120;
   background-image: 
     radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, rgba(15, 23, 42, 0.40) 100%),
-    url('file-sharing-bg.jpg') !important;
+    url('site-bg.jpg') !important;
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
@@ -127,13 +127,13 @@ body, body.dark-theme, body.liquid-glass-theme, body.bg-workspace, body.bg-glass
   padding: 20px;
   background-color: #0b1120;
   background-image: 
-    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, rgba(15, 23, 42, 0.45) 100%),
-    url('file-sharing-bg.jpg');
+    radial-gradient(circle at 50% 50%, rgba(255, 255, 255, 0.04) 0%, rgba(15, 23, 42, 0.40) 100%),
+    url('site-bg.jpg') !important;
   background-repeat: no-repeat;
   background-position: center center;
   background-size: cover;
-  backdrop-filter: blur(8px);
-  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important;
 }
 
 .auth-card {
@@ -3004,4 +3004,263 @@ body, body.dark-theme, body.liquid-glass-theme, body.bg-workspace, body.bg-glass
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
   }
+}
+
+/* ==========================================================================
+   ENHANCED LIQUID GLASS BUTTONS & SCANNER POLISH
+   ========================================================================== */
+
+/* Universal Liquid Glass Buttons */
+.btn {
+  position: relative;
+  overflow: hidden;
+  padding: 11px 22px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.35);
+  text-decoration: none;
+  transition: all 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  user-select: none;
+  letter-spacing: 0.2px;
+}
+
+.btn:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.08);
+}
+
+.btn:active {
+  transform: scale(0.97);
+}
+
+/* Moving Specular Reflection Shine */
+.btn::after {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -80%;
+  width: 50%;
+  height: 200%;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.55), transparent);
+  transform: rotate(25deg);
+  transition: left 0.65s cubic-bezier(0.2, 0.8, 0.2, 1);
+  pointer-events: none;
+}
+
+.btn:hover::after {
+  left: 140%;
+}
+
+/* Primary Liquid Gradient Button */
+.btn-primary {
+  background: linear-gradient(135deg, #0284c7 0%, #2563eb 100%) !important;
+  color: #ffffff !important;
+  border: 1px solid rgba(255, 255, 255, 0.6) !important;
+  box-shadow: 0 8px 24px -2px rgba(2, 132, 199, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+}
+
+.btn-primary:hover {
+  box-shadow: 0 14px 34px -2px rgba(2, 132, 199, 0.75), inset 0 1px 2px #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.9) !important;
+}
+
+/* Liquid Glass Cyan Accent Button */
+.btn-outline-cyan {
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(56, 189, 248, 0.65) !important;
+  color: #38bdf8 !important;
+  box-shadow: 0 6px 20px rgba(2, 132, 199, 0.25), inset 0 1px 1.5px rgba(255, 255, 255, 0.4) !important;
+}
+
+.btn-outline-cyan:hover {
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  color: #ffffff !important;
+  border-color: rgba(255, 255, 255, 0.8) !important;
+  box-shadow: 0 10px 28px rgba(2, 132, 199, 0.65) !important;
+}
+
+/* Crisp Frosted Glass Button */
+.btn-outline {
+  background: rgba(255, 255, 255, 0.85) !important;
+  backdrop-filter: blur(16px) saturate(180%);
+  -webkit-backdrop-filter: blur(16px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.95) !important;
+  color: #0f172a !important;
+  box-shadow: 0 6px 18px rgba(15, 30, 50, 0.10), inset 0 1px 2px #ffffff !important;
+}
+
+.btn-outline:hover {
+  background: #ffffff !important;
+  border-color: #38bdf8 !important;
+  color: #0284c7 !important;
+  box-shadow: 0 10px 28px rgba(15, 30, 50, 0.18) !important;
+}
+
+/* Danger Liquid Button */
+.btn-outline-danger {
+  background: rgba(220, 38, 38, 0.15) !important;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(220, 38, 38, 0.5) !important;
+  color: #ef4444 !important;
+  box-shadow: 0 6px 18px rgba(220, 38, 38, 0.15), inset 0 1px 1px rgba(255, 255, 255, 0.4) !important;
+}
+
+.btn-outline-danger:hover {
+  background: #dc2626 !important;
+  color: #ffffff !important;
+  border-color: #ffffff !important;
+  box-shadow: 0 10px 28px rgba(220, 38, 38, 0.5) !important;
+}
+
+/* High-Graphics Tactical Radar HUD Polish */
+.high-graphics-radar-container {
+  background: rgba(10, 16, 31, 0.72) !important;
+  backdrop-filter: blur(28px) saturate(190%) !important;
+  -webkit-backdrop-filter: blur(28px) saturate(190%) !important;
+  border: 1px solid rgba(56, 189, 248, 0.35) !important;
+  border-radius: 28px !important;
+  padding: 30px 24px !important;
+  box-shadow: 0 24px 64px -8px rgba(3, 7, 18, 0.5), inset 0 1px 2px rgba(255, 255, 255, 0.4) !important;
+}
+
+.radar-hud-sphere {
+  position: relative !important;
+  width: 100% !important;
+  max-width: 440px !important;
+  aspect-ratio: 1 / 1 !important;
+  margin: 0 auto !important;
+  border-radius: 50% !important;
+  overflow: hidden !important;
+  background: radial-gradient(circle at 50% 50%, rgba(2, 132, 199, 0.22) 0%, rgba(15, 23, 42, 0.92) 65%, rgba(6, 11, 24, 0.98) 100%) !important;
+  border: 2px solid rgba(56, 189, 248, 0.55) !important;
+  box-shadow: 0 0 40px rgba(2, 132, 199, 0.35), inset 0 0 50px rgba(2, 132, 199, 0.4) !important;
+}
+
+.hud-sweep-beam {
+  position: absolute !important;
+  inset: 0 !important;
+  border-radius: 50% !important;
+  background: conic-gradient(from 0deg at 50% 50%, rgba(56, 189, 248, 0.6) 0deg, rgba(2, 132, 199, 0.25) 30deg, transparent 70deg) !important;
+  animation: radarSweepRotate 3.5s linear infinite !important;
+  pointer-events: none !important;
+  z-index: 3 !important;
+}
+
+.hud-sweep-beam::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 50%;
+  width: 2px;
+  height: 50%;
+  background: linear-gradient(180deg, #38bdf8 0%, rgba(56, 189, 248, 0.1) 100%);
+  box-shadow: 0 0 12px #38bdf8, 0 0 4px #ffffff;
+  transform: translateX(-50%);
+}
+
+@keyframes radarSweepRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
+/* Floating Device inside Radar */
+.radar-floating-device {
+  position: absolute !important;
+  transform: translate(-50%, -50%) !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  gap: 6px !important;
+  cursor: pointer !important;
+  transition: transform 0.25s cubic-bezier(0.2, 0.8, 0.2, 1), filter 0.25s ease !important;
+  z-index: 12 !important;
+  user-select: none !important;
+}
+
+.radar-floating-device:hover {
+  transform: translate(-50%, -50%) scale(1.15) translateY(-3px) !important;
+  z-index: 25 !important;
+}
+
+.radar-floating-device:active {
+  transform: translate(-50%, -50%) scale(0.95) !important;
+}
+
+.device-avatar-bubble {
+  width: 48px !important;
+  height: 48px !important;
+  border-radius: 50% !important;
+  background: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 2px solid #38bdf8 !important;
+  color: #ffffff !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  font-size: 20px !important;
+  position: relative !important;
+  box-shadow: 0 0 20px rgba(56, 189, 248, 0.65), inset 0 1px 2px rgba(255, 255, 255, 0.8) !important;
+  transition: all 0.2s ease !important;
+}
+
+.radar-floating-device:hover .device-avatar-bubble {
+  background: linear-gradient(135deg, #0284c7, #2563eb) !important;
+  box-shadow: 0 0 32px rgba(56, 189, 248, 1), inset 0 1px 2px #ffffff !important;
+  border-color: #ffffff !important;
+}
+
+.device-sonar-wave {
+  position: absolute;
+  inset: -6px;
+  border-radius: 50%;
+  border: 2px solid rgba(56, 189, 248, 0.7);
+  animation: sonarWavePulse 1.8s ease-out infinite;
+  pointer-events: none;
+}
+
+@keyframes sonarWavePulse {
+  0% { transform: scale(0.9); opacity: 1; }
+  100% { transform: scale(1.8); opacity: 0; }
+}
+
+.device-hud-pill {
+  background: rgba(15, 23, 42, 0.92) !important;
+  backdrop-filter: blur(14px) !important;
+  -webkit-backdrop-filter: blur(14px) !important;
+  border: 1px solid rgba(56, 189, 248, 0.5) !important;
+  padding: 4px 12px !important;
+  border-radius: 9999px !important;
+  display: flex !important;
+  flex-direction: column !important;
+  align-items: center !important;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.5) !important;
+  white-space: nowrap !important;
+  text-align: center !important;
+}
+
+.device-hud-pill strong {
+  font-size: 11px !important;
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+.device-send-hint {
+  font-size: 9px !important;
+  color: #38bdf8 !important;
+  font-weight: 800 !important;
+  letter-spacing: 0.5px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 3px !important;
+  margin-top: 1px !important;
 }
